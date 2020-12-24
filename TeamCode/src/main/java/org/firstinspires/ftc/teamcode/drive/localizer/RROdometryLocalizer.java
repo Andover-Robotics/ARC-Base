@@ -1,54 +1,45 @@
-package org.firstinspires.ftc.teamcode.drive;
+package org.firstinspires.ftc.teamcode.drive.localizer;
 
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
+import com.acmerobotics.roadrunner.localization.TwoTrackingWheelLocalizer;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.util.Encoder;
 
 import java.util.Arrays;
 import java.util.List;
+import org.firstinspires.ftc.teamcode.util.Encoder.Direction;
 
-/*
- * Sample tracking wheel localizer implementation assuming the standard configuration:
- *
- *    /--------------\
- *    |     ____     |
- *    |     ----     |
- *    | ||        || |
- *    | ||        || |
- *    |              |
- *    |              |
- *    \--------------/
- *
- */
 @Config
-public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer {
+public class RROdometryLocalizer extends ThreeTrackingWheelLocalizer {
 
-  public static double TICKS_PER_REV = 0;
-  public static double WHEEL_RADIUS = 2; // in
+  // E8T-360-250-...
+  public static double TICKS_PER_REV = 360;
+  public static double WHEEL_RADIUS = 38.0 / 2 / 25.4; // in
   public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
 
-  public static double LATERAL_DISTANCE = 10; // in; distance between the left and right wheels
-  public static double FORWARD_OFFSET = 4; // in; offset of the lateral wheel
+  private final Encoder leftEncoder, rightEncoder, centerEncoder;
 
-  private Encoder leftEncoder, rightEncoder, frontEncoder;
-
-  public StandardTrackingWheelLocalizer(HardwareMap hardwareMap) {
+  public RROdometryLocalizer(HardwareMap hardwareMap) {
+    // First calculated in https://docs.google.com/document/d/1s6HzvajxItlIaULulVud0IRhnVrH16yjvsGW4jbwosQ/edit
     super(Arrays.asList(
-        new Pose2d(0, LATERAL_DISTANCE / 2, 0), // left
-        new Pose2d(0, -LATERAL_DISTANCE / 2, 0), // right
-        new Pose2d(FORWARD_OFFSET, 0, Math.toRadians(90)) // front
+        new Pose2d(-0.5485, 7.7588, 0), // left (no electronics)
+        new Pose2d(-0.5485, -7.7588, 0), // right (with electronics)
+        // TODO change this if they don't correspond in position
+        new Pose2d(-4.9242, 0.5485, Math.toRadians(90)) // center
     ));
 
     leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "leftEncoder"));
     rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightEncoder"));
-    frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "frontEncoder"));
+    centerEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "centerEncoder"));
 
     // TODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
+    rightEncoder.setDirection(Direction.REVERSE);
   }
 
   public static double encoderTicksToInches(double ticks) {
@@ -61,7 +52,7 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
     return Arrays.asList(
         encoderTicksToInches(leftEncoder.getCurrentPosition()),
         encoderTicksToInches(rightEncoder.getCurrentPosition()),
-        encoderTicksToInches(frontEncoder.getCurrentPosition())
+        encoderTicksToInches(centerEncoder.getCurrentPosition())
     );
   }
 
@@ -75,7 +66,7 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
     return Arrays.asList(
         encoderTicksToInches(leftEncoder.getRawVelocity()),
         encoderTicksToInches(rightEncoder.getRawVelocity()),
-        encoderTicksToInches(frontEncoder.getRawVelocity())
+        encoderTicksToInches(centerEncoder.getRawVelocity())
     );
   }
 }

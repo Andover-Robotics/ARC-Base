@@ -18,7 +18,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.RobotLog;
 import java.util.List;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 
 /*
  * This routine is designed to tune the PID coefficients used by the REV Expansion Hubs for closed-
@@ -54,7 +54,7 @@ public class DriveVelocityPIDTuner extends LinearOpMode {
 
   private FtcDashboard dashboard = FtcDashboard.getInstance();
 
-  private SampleMecanumDrive drive;
+  private RRMecanumDrive drive;
 
   enum Mode {
     DRIVER_MODE,
@@ -86,7 +86,7 @@ public class DriveVelocityPIDTuner extends LinearOpMode {
 
     telemetry = new MultipleTelemetry(telemetry, dashboard.getTelemetry());
 
-    drive = new SampleMecanumDrive(hardwareMap);
+    drive = new RRMecanumDrive(hardwareMap);
 
     mode = Mode.TUNING_MODE;
 

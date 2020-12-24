@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.Objects;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 
 /**
  * This routine is designed to calculate the maximum velocity your bot can achieve under load. It
@@ -32,7 +32,7 @@ public class MaxVelocityTuner extends LinearOpMode {
 
   @Override
   public void runOpMode() throws InterruptedException {
-    SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+    RRMecanumDrive drive = new RRMecanumDrive(hardwareMap);
 
     drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
