@@ -151,7 +151,7 @@ public class RRMecanumDrive extends MecanumDrive {
     leftRear.setDirection(Direction.REVERSE);
 
     // TODO change localizer to fusion
-    setLocalizer(new RROdometryLocalizer(hardwareMap, imu));
+    setLocalizer(new RROdometryLocalizer(hardwareMap));
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {

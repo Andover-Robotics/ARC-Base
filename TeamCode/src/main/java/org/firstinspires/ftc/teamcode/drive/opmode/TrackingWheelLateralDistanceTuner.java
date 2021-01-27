@@ -123,8 +123,8 @@ public class TrackingWheelLateralDistanceTuner extends LinearOpMode {
     telemetry.addLine("Localizer's total heading: " + Math.toDegrees(headingAccumulator) + "°");
     telemetry.addLine("Effective LATERAL_DISTANCE: " +
         (headingAccumulator / (NUM_TURNS * Math.PI * 2))
-            * RROdometryLocalizer.LATERAL_DISTANCE);
-
+//            * RROdometryLocalizer.LATERAL_DISTANCE);
+              * 1);
     telemetry.update();
 
     while (!isStopRequested()) {
