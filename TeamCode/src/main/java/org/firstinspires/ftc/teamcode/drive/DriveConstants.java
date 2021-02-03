@@ -1,9 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.trajectory.constraints.DriveConstraints;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
-import com.qualcomm.hardware.motors.GoBILDA5202Series;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 /*
@@ -68,11 +66,10 @@ public class DriveConstants {
    * acceleration values are required, and the jerk values are optional (setting a jerk of 0.0
    * forces acceleration-limited profiling). All distance units are inches.
    */
-  public static DriveConstraints BASE_CONSTRAINTS = new DriveConstraints(
-      30.0, 30.0, 0.0,
-      Math.toRadians(180.0), Math.toRadians(180.0), 0.0
-  );
-
+  public static double MAX_VEL = 30;
+  public static double MAX_ACCEL = 30;
+  public static double MAX_ANG_VEL = Math.toRadians(180.0);
+  public static double MAX_ANG_ACCEL = Math.toRadians(180.0);
 
   public static double encoderTicksToInches(double ticks) {
     return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV;

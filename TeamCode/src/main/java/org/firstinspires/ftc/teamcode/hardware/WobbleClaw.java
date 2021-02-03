@@ -4,6 +4,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
@@ -32,8 +33,10 @@ public class WobbleClaw extends SubsystemBase {
     armRotator.setTargetPosition(armPos);
   }
 
+  public void stopArm() {
+    armRotator.setTargetPosition(armRotator.getCurrentPosition());
+  }
 
-  //4 bar code
   public void open() {
     claw.setPosition(clawOpenPos);
   }
@@ -55,7 +58,10 @@ public class WobbleClaw extends SubsystemBase {
     armRotator.setTargetPosition(armDownPos);
   }
 
-  private int clamp(int value, int min, int max) {
-    return value < min ? min : Math.min(value, max);
+  // Autonomous specific
+  public void rotateUntilTargetReached(LinearOpMode opMode) {
+    while (!armRotator.atTargetPosition() && !opMode.isStopRequested()) {
+      armRotator.set(armSpeed);
+    }
   }
 }

@@ -18,8 +18,7 @@ import com.acmerobotics.roadrunner.profile.MotionProfileGenerator;
 import com.acmerobotics.roadrunner.profile.MotionState;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
-import com.acmerobotics.roadrunner.trajectory.constraints.DriveConstraints;
-import com.acmerobotics.roadrunner.trajectory.constraints.MecanumConstraints;
+import com.acmerobotics.roadrunner.trajectory.constraints.*;
 import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -75,14 +74,15 @@ public class RRMecanumDrive extends MecanumDrive {
   private MotionProfile turnProfile;
   private double turnStart;
 
-  private final DriveConstraints constraints;
+  private final TrajectoryVelocityConstraint velConstraint;
+  private final TrajectoryAccelerationConstraint accelConstraint;
   private final TrajectoryFollower follower;
 
   private final LinkedList<Pose2d> poseHistory;
 
   private final DcMotorEx leftFront, leftRear, rightRear, rightFront;
   private final List<DcMotorEx> motors;
-  private final BNO055IMU imu;
+  public final BNO055IMU imu;
 
   private final VoltageSensor batteryVoltageSensor;
 
@@ -101,7 +101,11 @@ public class RRMecanumDrive extends MecanumDrive {
     turnController = new PIDFController(HEADING_PID);
     turnController.setInputBounds(0, 2 * Math.PI);
 
-    constraints = new MecanumConstraints(BASE_CONSTRAINTS, TRACK_WIDTH);
+    velConstraint = new MinVelocityConstraint(Arrays.asList(
+        new AngularVelocityConstraint(MAX_ANG_VEL),
+        new MecanumVelocityConstraint(MAX_VEL, TRACK_WIDTH)
+    ));
+    accelConstraint = new ProfileAccelerationConstraint(MAX_ACCEL);
     follower = new HolonomicPIDVAFollower(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
         new Pose2d(0.5, 0.5, Math.toRadians(5.0)), 0.5);
 
@@ -124,10 +128,10 @@ public class RRMecanumDrive extends MecanumDrive {
     // upward (normal to the floor) using a command like the following:
      BNO055IMUUtil.remapAxes(imu, AxesOrder.XYZ, AxesSigns.NPN);
 
-    leftFront = hardwareMap.get(DcMotorEx.class, "driveFL");
-    leftRear = hardwareMap.get(DcMotorEx.class, "driveBL");
-    rightRear = hardwareMap.get(DcMotorEx.class, "driveBR");
-    rightFront = hardwareMap.get(DcMotorEx.class, "driveFR");
+    leftFront = hardwareMap.get(DcMotorEx.class, "motorFL");
+    leftRear = hardwareMap.get(DcMotorEx.class, "motorBL");
+    rightRear = hardwareMap.get(DcMotorEx.class, "motorBR");
+    rightFront = hardwareMap.get(DcMotorEx.class, "motorFR");
 
     motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -151,19 +155,20 @@ public class RRMecanumDrive extends MecanumDrive {
     leftRear.setDirection(Direction.REVERSE);
 
     // TODO change localizer to fusion
-    setLocalizer(new RROdometryLocalizer(hardwareMap));
+//    setLocalizer(new RROdometryLocalizer(hardwareMap));
+    setLocalizer(new MecanumLocalizer(this, true));
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
-    return new TrajectoryBuilder(startPose, constraints);
+    return new TrajectoryBuilder(startPose, velConstraint, accelConstraint);
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose, boolean reversed) {
-    return new TrajectoryBuilder(startPose, reversed, constraints);
+    return new TrajectoryBuilder(startPose, reversed, velConstraint, accelConstraint);
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose, double startHeading) {
-    return new TrajectoryBuilder(startPose, startHeading, constraints);
+    return new TrajectoryBuilder(startPose, startHeading, velConstraint, accelConstraint);
   }
 
   public void turnAsync(double angle) {
@@ -174,9 +179,8 @@ public class RRMecanumDrive extends MecanumDrive {
     turnProfile = MotionProfileGenerator.generateSimpleMotionProfile(
         new MotionState(heading, 0, 0, 0),
         new MotionState(heading + angle, 0, 0, 0),
-        constraints.maxAngVel,
-        constraints.maxAngAccel,
-        constraints.maxAngJerk
+        MAX_ANG_VEL,
+        MAX_ANG_ACCEL
     );
 
     turnStart = clock.seconds();

@@ -72,9 +72,9 @@ public class DriveVelocityPIDTuner extends LinearOpMode {
     MotionState start = new MotionState(movingForward ? 0 : DISTANCE, 0, 0, 0);
     MotionState goal = new MotionState(movingForward ? DISTANCE : 0, 0, 0, 0);
     return MotionProfileGenerator.generateSimpleMotionProfile(start, goal,
-        DriveConstants.BASE_CONSTRAINTS.maxVel,
-        DriveConstants.BASE_CONSTRAINTS.maxAccel,
-        DriveConstants.BASE_CONSTRAINTS.maxJerk);
+        DriveConstants.MAX_VEL,
+        DriveConstants.MAX_ACCEL,
+        0);
   }
 
   @Override

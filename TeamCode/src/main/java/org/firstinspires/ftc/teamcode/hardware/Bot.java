@@ -7,34 +7,54 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMU.AngleUnit;
 import com.qualcomm.hardware.bosch.BNO055IMU.Parameters;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 
 public class Bot {
   // in TeleOp and Autonomous we should be able to call "new Bot(this)"
   // bot.intake.run(), bot.shooter.spinUp
+  private static Bot instance;
 
   public final Intake intake;
   public final Shooter shooter;
   public final WobbleClaw wobbleClaw;
   public final MecanumDrive drive;
+  public final RRMecanumDrive roadRunner;
   public final BNO055IMU imu;
+  public OpMode opMode;
 
-  public Bot(OpMode opMode){
+  /** Get the current Bot instance from somewhere other than an OpMode */
+public static Bot getInstance() {
+    if (instance == null) {
+      throw new IllegalStateException("tried to getInstance of Bot when uninitialized");
+    }
+    return instance;
+  }
+
+  public static Bot getInstance(OpMode opMode) {
+    if (instance == null) {
+      return instance = new Bot(opMode);
+    }
+    instance.opMode = opMode;
+    return instance;
+  }
+
+  private Bot(OpMode opMode){
+    this.opMode = opMode;
     this.intake = new Intake(opMode);
     this.shooter = new Shooter(opMode);
     this.wobbleClaw = new WobbleClaw(opMode);
-    this.drive = new MecanumDrive(true,
-        new MotorEx(opMode.hardwareMap, "motorFL", GoBILDA.RPM_312),
-        new MotorEx(opMode.hardwareMap, "motorFR", GoBILDA.RPM_312),
-        new MotorEx(opMode.hardwareMap, "motorBL", GoBILDA.RPM_312),
-        new MotorEx(opMode.hardwareMap, "motorBR", GoBILDA.RPM_312)
-    );
-    imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
-    initializeImu();
+    this.drive = new MecanumDrive(
+        new MotorEx(opMode.hardwareMap, "motorFL"),
+        new MotorEx(opMode.hardwareMap, "motorFR"),
+        new MotorEx(opMode.hardwareMap, "motorBL"),
+        new MotorEx(opMode.hardwareMap, "motorBR"));
+    this.roadRunner = new RRMecanumDrive(opMode.hardwareMap);
+    imu = roadRunner.imu;
   }
 
-  private void initializeImu() {
-    final Parameters params = new Parameters();
-    params.angleUnit = AngleUnit.RADIANS;
-    imu.initialize(params);
-  }
+//  private void initializeImu() {
+//    final Parameters params = new Parameters();
+//    params.angleUnit = AngleUnit.RADIANS;
+//    imu.initialize(params);
+//  }
 }
