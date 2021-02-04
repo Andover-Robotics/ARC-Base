@@ -5,11 +5,10 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.Servo;
 
 public class Intake extends SubsystemBase {
-  public static double intakeSpeed = 0.4;
+  public static double intakeSpeed = 1;
+  public static double conveyorSpeed = 1;
 
   public static class RunIntake extends CommandBase {
     private final Intake intake;
@@ -30,22 +29,29 @@ public class Intake extends SubsystemBase {
     }
   }
 
-  private CRServo convBelt;
+  private Motor convBelt;
   private Motor actuator;
+  private long startTime;
 
   public Intake(OpMode opMode) {
-    convBelt = opMode.hardwareMap.crservo.get("convBelt");
+    convBelt = new Motor(opMode.hardwareMap, "convBelt", GoBILDA.RPM_1150);
     actuator = new Motor(opMode.hardwareMap, "intake", GoBILDA.RPM_435);
     actuator.setInverted(true);
+    startTime = System.currentTimeMillis();
   }
 
   public void run() {
     actuator.set(intakeSpeed);
-    convBelt.setPower(1);
+    convBelt.set(conveyorSpeed);
+  }
+
+  public void spit() {
+    actuator.set(-intakeSpeed);
+    convBelt.set(-conveyorSpeed);
   }
 
   public void stop() {
     actuator.stopMotor();
-    convBelt.setPower(0);
+    convBelt.stopMotor();
   }
 }

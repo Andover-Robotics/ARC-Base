@@ -6,7 +6,10 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.BNO055IMU.AngleUnit;
 import com.qualcomm.hardware.bosch.BNO055IMU.Parameters;
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 
 public class Bot {
@@ -43,13 +46,21 @@ public static Bot getInstance() {
     this.intake = new Intake(opMode);
     this.shooter = new Shooter(opMode);
     this.wobbleClaw = new WobbleClaw(opMode);
-    this.drive = new MecanumDrive(
+    this.roadRunner = new RRMecanumDrive(opMode.hardwareMap);
+    imu = roadRunner.imu;
+    this.drive = new MecanumDrive(false,
         new MotorEx(opMode.hardwareMap, "motorFL"),
         new MotorEx(opMode.hardwareMap, "motorFR"),
         new MotorEx(opMode.hardwareMap, "motorBL"),
         new MotorEx(opMode.hardwareMap, "motorBR"));
-    this.roadRunner = new RRMecanumDrive(opMode.hardwareMap);
-    imu = roadRunner.imu;
+
+    enableBulkReads(opMode.hardwareMap);
+  }
+
+  private void enableBulkReads(HardwareMap map) {
+    for (LynxModule hub : map.getAll(LynxModule.class)) {
+      hub.setBulkCachingMode(BulkCachingMode.AUTO);
+    }
   }
 
 //  private void initializeImu() {

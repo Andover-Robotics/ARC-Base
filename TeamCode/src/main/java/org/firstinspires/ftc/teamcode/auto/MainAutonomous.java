@@ -1,13 +1,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
-import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.trajectory.MarkerCallback;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.acmerobotics.roadrunner.trajectory.TrajectoryBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import java.util.ArrayList;
-import java.util.function.Consumer;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
 
 @Autonomous(name = "Main Autonomous", group = "Competition")
@@ -15,103 +9,102 @@ public class MainAutonomous extends LinearOpMode {
 
   private Bot bot;
 
-  ArrayList<Trajectory> trajectories = new ArrayList<>();
   RingStackDetector.RingStackResult rings;
   double ringConfidence;
   RingStackDetector pipeline;
-  static ConditionalPoseSet[] poseSets = new ConditionalPoseSet[5];
-  ConditionalPoseSet poseSet;
 
 
-  static {
-    /*
-    0 rings bot(intersects launch line)
-    1 ring mid
-    4 rings corner
-          May have to increase Y because of wobble goal arm
-     */
-    poseSets[0] = new ConditionalPoseSet(new Pose2d[]{new Pose2d(-2, -48, -90),
-        new Pose2d(-32, -59, 90),
-        new Pose2d(6, -48, -90)});
-    poseSets[1] = new ConditionalPoseSet(new Pose2d[]{new Pose2d(22, -24, -90.00001),
-        new Pose2d(-32, -59, 90),
-        new Pose2d(30, -24, -90)});
-    poseSets[4] = new ConditionalPoseSet(new Pose2d[]{//new Pose2d(-24, -20, 0),Plows through 4ring
-        new Pose2d(46, -48, -89.99999),
-        new Pose2d(-32, -59, 90),
-        new Pose2d(54, -48, -90)});
-  }
+//  static ConditionalPoseSet[] poseSets = new ConditionalPoseSet[5];
+//  ConditionalPoseSet poseSet;
+
+
+//  static {
+//    /*
+//    0 rings bot(intersects launch line)
+//    1 ring mid
+//    4 rings corner
+//          May have to increase Y because of wobble goal arm
+//     */
+//    poseSets[0] = new ConditionalPoseSet(new Pose2d[]{new Pose2d(-2, -48, -90),
+//        new Pose2d(-32, -59, 90),
+//        new Pose2d(6, -48, -90)});
+//    poseSets[1] = new ConditionalPoseSet(new Pose2d[]{new Pose2d(22, -24, -90.00001),
+//        new Pose2d(-32, -59, 90),
+//        new Pose2d(30, -24, -90)});
+//    poseSets[4] = new ConditionalPoseSet(new Pose2d[]{//new Pose2d(-24, -20, 0),Plows through 4ring
+//        new Pose2d(46, -48, -89.99999),
+//        new Pose2d(-32, -59, 90),
+//        new Pose2d(54, -48, -90)});
+//  }
 
   @Override
   public void runOpMode() throws InterruptedException {
+//    AutoPaths paths = new AutoPaths();
 
     // TODO next: keep running the pipeline and updating the verdict in the INIT loop
     bot = Bot.getInstance(this);
-    rings = (pipeline.currentlyDetected().orElse(null)).first;
-    ringConfidence = (pipeline.currentlyDetected().orElse(null)).second;
-    poseSet = poseSets[rings.ringCount];
-    TrajectoryBuilder builder = bot.roadRunner.trajectoryBuilder(new Pose2d(-63, -33, 0));
-
-    poseSet.applyPoses.accept(builder);//Correct or no?
-    {//markers
-      builder.addDisplacementMarker(0, () -> {
-      });
-    }
-
-    trajectories.add(builder.build());
 
     while (!isStarted()) {
       if (isStopRequested()) return;
       // keep getting results from the pipeline
     }
 
+    rings = (pipeline.currentlyDetected().orElse(null)).first;
+    ringConfidence = (pipeline.currentlyDetected().orElse(null)).second;
+//    List<Trajectory> trajectories = paths.getTrajectories(rings.ringCount);
+
     // get the pose set for the current ring stack setup
+//    for(Trajectory trajectory : trajectories){
+//      bot.roadRunner.followTrajectory(trajectory);//i guess
+//    }
+
 
     // shoot 3 rings
     bot.shooter.shootRings(this, 3, 0.8);
 
     // follow the pose set
+
   }
 
 
 
 
-  private static class ConditionalPoseSet {
-
-    Pose2d[] poses;
-    DisplacementMarker[] markers;
-
-    private static class DisplacementMarker {
-
-      double dist;
-      Runnable action;
-
-      public DisplacementMarker(double dist, Runnable action) {
-        this.dist = dist;
-        this.action = action;
-      }
-    }
-
-    Consumer<TrajectoryBuilder> applyPoses = (TrajectoryBuilder builder) -> {
-      for (Pose2d pose : poses) {
-        builder.splineToLinearHeading(pose, 0);
-      }
-    };
-
-    Consumer<TrajectoryBuilder> applyMarkers = (TrajectoryBuilder builder) -> {
-      for (DisplacementMarker marker : markers) {
-        if (marker.dist == -1) {
-          builder.addDisplacementMarker(marker.action::run);
-        } else {
-          builder.splineToLinearHeading(new Pose2d(), 0.0);
-        }
-      }
-    };
-
-    public ConditionalPoseSet(Pose2d[] poses) {
-      this.poses = poses;
-    }
-  }
+//  private static class ConditionalPoseSet {
+//
+//    Pose2d[] poses;
+//    DisplacementMarker[] markers;
+//
+//    private static class DisplacementMarker {
+//
+//      double dist;
+//      Runnable action;
+//
+//      public DisplacementMarker(double dist, Runnable action) {
+//        this.dist = dist;
+//        this.action = action;
+//      }
+//    }
+//
+//    Consumer<TrajectoryBuilder> applyPoses = (TrajectoryBuilder builder) -> {
+//      for (Pose2d pose : poses) {
+//        builder.splineToLinearHeading(pose, 0);
+//      }
+//    };
+//
+//    Consumer<TrajectoryBuilder> applyMarkers = (TrajectoryBuilder builder) -> {
+//      for (DisplacementMarker marker : markers) {
+//        if (marker.dist == -1) {
+//          builder.addDisplacementMarker(marker.action::run);
+//        } else {
+//          builder.splineToLinearHeading(new Pose2d(), 0.0);
+//        }
+//      }
+//    };
+//
+//    public ConditionalPoseSet(Pose2d[] poses) {
+//      this.poses = poses;
+//    }
+//  }
 }
 
 /*michael's kotlin stuff

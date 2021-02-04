@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
 import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
@@ -10,7 +11,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 
 @TeleOp(name = "Main TeleOp", group = "Competition")
 public class MainTeleOp extends BaseOpMode {
-
+  double cycle = 0;
+  double prevRead = 0;
   enum ShootMode {
     POWER_SHOT,
     TOWER_GOAL
@@ -22,8 +24,15 @@ public class MainTeleOp extends BaseOpMode {
     LOW
   }
 
+  enum RingMode {
+    INTAKE,
+    SHOOT,
+    OFF
+  }
+
   private ShootMode shootState = ShootMode.TOWER_GOAL;
   private TowerMode towerState = TowerMode.HIGH;
+  private RingMode ringMode = RingMode.OFF;
 
   /*
     Guidance:
@@ -42,6 +51,8 @@ public class MainTeleOp extends BaseOpMode {
 
   @Override
   public void subLoop() {
+    cycle = 1.0/(time-prevRead);
+    prevRead = time;
 //  Controller 1	(Movement)
 //
 //    Left joystick		Move (Strafing)
@@ -53,7 +64,7 @@ public class MainTeleOp extends BaseOpMode {
     driveSpeed = (1 - 0.4 * (gamepad1.left_trigger + gamepad1.right_trigger));
     bot.drive.driveFieldCentric(gamepad1.left_stick_x * driveSpeed,
         -gamepad1.left_stick_y * driveSpeed,
-        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad2.right_stick_x,
+        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x,
         bot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ,
             AngleUnit.DEGREES).firstAngle);//may have to switch angle
 
@@ -85,24 +96,27 @@ public class MainTeleOp extends BaseOpMode {
 //    D-pad			Up: Raise wobble arm at constant speed; Down: Lower
 //    wobble arm at constant speed;
 
-    if (gamepad2.dpad_down) {
-      bot.wobbleClaw.rotateArm(-0.1);
-    } else if (gamepad2.dpad_up) {
-      bot.wobbleClaw.rotateArm(0.1);
+    if (gamepad2.dpad_right) {
+      bot.wobbleClaw.raiseArm();
+    } else if (gamepad2.dpad_left) {
+      bot.wobbleClaw.lowerArm();
     } else {
       bot.wobbleClaw.stopArm();
     }
 
     //    A			Toggle intake; toggle shooter between idle and shooting
 //    B			Toggle Wobble Goal Claw
-//    X			N/A
+//    X			stop
 //    Y			Feed single ring to shooter
 
-    if (gamepadEx2.getButton(Button.X)) {
+    if (gamepadEx2.getButton(Button.X) && ringMode != RingMode.OFF) {
+      ringMode = RingMode.OFF;
       bot.intake.stop();
       bot.shooter.turnOff();
-    } else if (toggleButtonReaders.get("g2a").wasJustReleased()) {
-      if (toggleButtonReaders.get("g2a").getState()) {
+      bot.wobbleClaw.stopArm();
+    } else if (gamepadEx2.wasJustPressed(Button.A) || gamepadEx1.wasJustPressed(Button.A)) {
+      ringMode = ringMode == RingMode.INTAKE ? RingMode.SHOOT : RingMode.INTAKE;
+      if (ringMode == RingMode.INTAKE && !(gamepad2.right_stick_button || gamepad1.right_stick_button)) {
         bot.intake.run();
         bot.shooter.runIdleSpeed();
       } else {
@@ -111,6 +125,9 @@ public class MainTeleOp extends BaseOpMode {
       }
     }
 
+    if (gamepad2.right_stick_button || gamepad1.right_stick_button) {
+      bot.intake.spit();
+    }
 
     if (toggleButtonReaders.get("g2b").wasJustReleased()) {
       if (toggleButtonReaders.get("g2b").getState()) {
@@ -146,6 +163,8 @@ public class MainTeleOp extends BaseOpMode {
     CommandScheduler.getInstance().run();
   }
 
+  // ------------------------------
+  
   private void cycleTowerState() {
     switch (towerState) {
       case LOW:
@@ -164,5 +183,7 @@ public class MainTeleOp extends BaseOpMode {
     telemetry.addData("Left Joystick (Strafing) X-Val: ", gamepad1.left_stick_x);
     telemetry.addData("Right Joystick (Turning) X-Val: ", gamepad1.right_stick_x);
     telemetry.addData("Left Joystick (Moving) Y-Val: ", gamepad1.left_stick_y);
+    telemetry.addData("Cycle rate: ", cycle);
+    FtcDashboard.getInstance().getTelemetry().update();
   }
 }

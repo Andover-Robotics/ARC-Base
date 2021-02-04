@@ -151,8 +151,8 @@ public class RRMecanumDrive extends MecanumDrive {
       setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MOTOR_VELO_PID);
     }
 
-    leftFront.setDirection(Direction.REVERSE);
-    leftRear.setDirection(Direction.REVERSE);
+    rightFront.setDirection(Direction.REVERSE);
+    rightRear.setDirection(Direction.REVERSE);
 
     // TODO change localizer to fusion
 //    setLocalizer(new RROdometryLocalizer(hardwareMap));
