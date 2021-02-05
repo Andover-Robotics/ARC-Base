@@ -29,15 +29,13 @@ public class Intake extends SubsystemBase {
     }
   }
 
-  private Motor convBelt;
-  private Motor actuator;
-  private long startTime;
+  private final Motor convBelt;
+  private final Motor actuator;
 
   public Intake(OpMode opMode) {
     convBelt = new Motor(opMode.hardwareMap, "convBelt", GoBILDA.RPM_1150);
     actuator = new Motor(opMode.hardwareMap, "intake", GoBILDA.RPM_435);
     actuator.setInverted(true);
-    startTime = System.currentTimeMillis();
   }
 
   public void run() {

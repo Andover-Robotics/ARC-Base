@@ -53,14 +53,6 @@ public static Bot getInstance() {
         new MotorEx(opMode.hardwareMap, "motorFR"),
         new MotorEx(opMode.hardwareMap, "motorBL"),
         new MotorEx(opMode.hardwareMap, "motorBR"));
-
-    enableBulkReads(opMode.hardwareMap);
-  }
-
-  private void enableBulkReads(HardwareMap map) {
-    for (LynxModule hub : map.getAll(LynxModule.class)) {
-      hub.setBulkCachingMode(BulkCachingMode.AUTO);
-    }
   }
 
 //  private void initializeImu() {

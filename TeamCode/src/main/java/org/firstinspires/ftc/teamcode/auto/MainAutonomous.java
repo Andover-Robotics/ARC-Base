@@ -2,7 +2,12 @@ package org.firstinspires.ftc.teamcode.auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement;
+import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement.Action;
+import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement.Path;
+import org.firstinspires.ftc.teamcode.auto.RingStackDetector.RingStackResult;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
+import java.util.List;
 
 @Autonomous(name = "Main Autonomous", group = "Competition")
 public class MainAutonomous extends LinearOpMode {
@@ -39,33 +44,45 @@ public class MainAutonomous extends LinearOpMode {
 
   @Override
   public void runOpMode() throws InterruptedException {
-//    AutoPaths paths = new AutoPaths();
-
-    // TODO next: keep running the pipeline and updating the verdict in the INIT loop
     bot = Bot.getInstance(this);
+
+    AutoPaths paths = new AutoPaths(this);
+    pipeline = new RingStackDetector(this);
 
     while (!isStarted()) {
       if (isStopRequested()) return;
       // keep getting results from the pipeline
+      pipeline.currentlyDetected()
+          .ifPresent((pair) -> {
+            telemetry.addData("detected", pair.first);
+            telemetry.addData("confidence", pair.second);
+            telemetry.update();
+            rings = pair.first;
+            ringConfidence = pair.second;
+          });
     }
 
-    rings = (pipeline.currentlyDetected().orElse(null)).first;
-    ringConfidence = (pipeline.currentlyDetected().orElse(null)).second;
-//    List<Trajectory> trajectories = paths.getTrajectories(rings.ringCount);
-
-    // get the pose set for the current ring stack setup
-//    for(Trajectory trajectory : trajectories){
-//      bot.roadRunner.followTrajectory(trajectory);//i guess
-//    }
-
+    if (rings == null) rings = RingStackResult.ZERO;
+    List<AutoPathElement> trajectories = paths.getTrajectories(rings.ringCount);
 
     // shoot 3 rings
     bot.shooter.shootRings(this, 3, 0.8);
+    if (isStopRequested()) return;
 
-    // follow the pose set
+    for (AutoPathElement item: trajectories) {
 
+      telemetry.addData("executing path element", item.getName());
+      telemetry.update();
+
+      if (item instanceof AutoPathElement.Path) {
+        bot.roadRunner.followTrajectory(((Path) item).getTrajectory());
+      } else if (item instanceof AutoPathElement.Action) {
+        ((Action) item).getRunner().invoke();
+      }
+
+      if (isStopRequested()) return;
+    }
   }
-
 
 
 

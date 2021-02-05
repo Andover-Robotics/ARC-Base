@@ -40,7 +40,7 @@ public class MainTeleOp extends BaseOpMode {
     - Should make a "Bot" class
     - Should use MecanumDrive from FTCLib; we don't implement mecanum ourselves
    */
-  void subInit(){
+  void subInit() {
 
   }
 
@@ -53,6 +53,7 @@ public class MainTeleOp extends BaseOpMode {
   public void subLoop() {
     cycle = 1.0/(time-prevRead);
     prevRead = time;
+
 //  Controller 1	(Movement)
 //
 //    Left joystick		Move (Strafing)
@@ -65,8 +66,7 @@ public class MainTeleOp extends BaseOpMode {
     bot.drive.driveFieldCentric(gamepad1.left_stick_x * driveSpeed,
         -gamepad1.left_stick_y * driveSpeed,
         gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x,
-        bot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ,
-            AngleUnit.DEGREES).firstAngle);//may have to switch angle
+        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle);
 
 //    D-pad			Move (Strafing at 100%) optional
 
@@ -77,15 +77,6 @@ public class MainTeleOp extends BaseOpMode {
 //    if(gamepadEx2.wasJustPressed(Button.X)){
     // TODO line up with tower goal
 //    }
-
-    if (gamepadEx1.wasJustPressed(Button.Y)) {
-      bot.shooter.feedRing();
-    }
-
-//    Start			N/A
-//    Select			N/A
-//    Logitech button	Party mode
-//
 
 //
 //Controller 2	(Robot tools)
@@ -109,24 +100,24 @@ public class MainTeleOp extends BaseOpMode {
 //    X			stop
 //    Y			Feed single ring to shooter
 
-    if (gamepadEx2.getButton(Button.X) && ringMode != RingMode.OFF) {
+    if ((gamepadEx1.getButton(Button.X) || gamepadEx2.getButton(Button.X)) && ringMode != RingMode.OFF) {
       ringMode = RingMode.OFF;
       bot.intake.stop();
       bot.shooter.turnOff();
       bot.wobbleClaw.stopArm();
+
     } else if (gamepadEx2.wasJustPressed(Button.A) || gamepadEx1.wasJustPressed(Button.A)) {
       ringMode = ringMode == RingMode.INTAKE ? RingMode.SHOOT : RingMode.INTAKE;
-      if (ringMode == RingMode.INTAKE && !(gamepad2.right_stick_button || gamepad1.right_stick_button)) {
-        bot.intake.run();
-        bot.shooter.runIdleSpeed();
-      } else {
-        bot.intake.stop();
-        bot.shooter.runShootingSpeed();
-      }
     }
 
     if (gamepad2.right_stick_button || gamepad1.right_stick_button) {
       bot.intake.spit();
+    } else if (ringMode == RingMode.INTAKE) {
+      bot.intake.run();
+      bot.shooter.runIdleSpeed();
+    } else if (ringMode == RingMode.SHOOT) {
+      bot.intake.stop();
+      bot.shooter.runShootingSpeed();
     }
 
     if (toggleButtonReaders.get("g2b").wasJustReleased()) {
@@ -137,7 +128,7 @@ public class MainTeleOp extends BaseOpMode {
       }
     }
 
-    if (gamepadEx2.wasJustPressed(Button.Y)) {
+    if (gamepadEx1.wasJustPressed(Button.Y) || gamepadEx2.wasJustPressed(Button.Y)) {
       bot.shooter.feedRing();
     }
 //

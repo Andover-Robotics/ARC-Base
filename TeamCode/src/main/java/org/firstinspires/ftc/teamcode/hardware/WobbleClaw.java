@@ -5,12 +5,12 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
-import com.arcrobotics.ftclib.hardware.motors.Motor.RunMode;
-import com.arcrobotics.ftclib.hardware.motors.Motor.ZeroPowerBehavior;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
+import com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -22,13 +22,13 @@ public class WobbleClaw extends SubsystemBase {
       armUpPos = 230, armDownPos = 406, rotationMaxTicksPerIteration = 4;//TODO: test values
   private int armPos = 0;//-156 is position @ "top"
 
-  private MotorEx armRotator;
+  private DcMotor armRotator;
   private Servo claw;
 
   public WobbleClaw(OpMode opMode) {
-    armRotator = new MotorEx(opMode.hardwareMap, "wobbleArm", GoBILDA.RPM_435);
+    armRotator = opMode.hardwareMap.dcMotor.get("wobbleArm");
     armRotator.setTargetPosition(0);
-    armRotator.setRunMode(RunMode.PositionControl);
+    armRotator.setMode(RunMode.RUN_TO_POSITION);
     armRotator.setZeroPowerBehavior(ZeroPowerBehavior.BRAKE);
     armPos = armRotator.getCurrentPosition();
 
@@ -61,10 +61,10 @@ public class WobbleClaw extends SubsystemBase {
   private FtcDashboard dash;
   @Override
   public void periodic() {
-    armRotator.set(armSpeed);
-    dash.getTelemetry().addData("arm target", armRotator.atTargetPosition());
+    armRotator.setPower(armSpeed);
+    dash.getTelemetry().addData("arm target", armRotator.getTargetPosition());
     dash.getTelemetry().addData("arm position", armRotator.getCurrentPosition());
-    dash.getTelemetry().addData("arm power", armRotator.get());
+    dash.getTelemetry().addData("arm power", armRotator.getPower());
   }
 
   public void raiseArm() {
@@ -75,10 +75,9 @@ public class WobbleClaw extends SubsystemBase {
     armRotator.setTargetPosition(armDownPos);
   }
   // Autonomous specific
-//  public void rotateUntilTargetReached(LinearOpMode opMode) {
-//    while (armRotator.isBusy() && !opMode.isStopRequested()) {
-//      armRotator.setPower(armSpeed);
-//    }
-//  }
-//
+  public void waitUntilTargetReached(LinearOpMode opMode) {
+    while (armRotator.isBusy() && !opMode.isStopRequested()) {
+      armRotator.setPower(armSpeed);
+    }
+  }
 }

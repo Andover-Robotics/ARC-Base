@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import java.util.concurrent.TimeUnit;
 
 public class Shooter extends SubsystemBase {
-  public static double onPower = 0.7, offPower = 0.25;
+  public static double onPower = 0.5, offPower = 0.25;
   public static double magazineBackward = 0.705, magazineForward = 0.88;
 
   private enum State {
@@ -67,7 +67,7 @@ public class Shooter extends SubsystemBase {
         feederTimer = null;
       }
     dash.getTelemetry().addData("shooter velocity", motor.getVelocity());
-    motor.motorEx.setPower(state.power);
+    motor.motorEx.setVelocity((int) Math.round(MAX_TICKS_PER_SECOND * state.power));
   }
 
   public void runShootingSpeed(){
@@ -89,6 +89,7 @@ public class Shooter extends SubsystemBase {
       shootOneRing(opMode, vel);
       // Wait for the next ring to fall
       opMode.sleep(400);
+      if (opMode.isStopRequested()) return;
     }
   }
 
