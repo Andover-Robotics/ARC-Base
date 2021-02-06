@@ -69,6 +69,8 @@ public class MainAutonomous extends LinearOpMode {
     bot.shooter.shootRings(this, 3, 0.8);
     if (isStopRequested()) return;
 
+    bot.roadRunner.setPoseEstimate(paths.getStartPose());
+
     for (AutoPathElement item: trajectories) {
 
       telemetry.addData("executing path element", item.getName());

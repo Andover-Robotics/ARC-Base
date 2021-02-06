@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 public class Bot {
   // in TeleOp and Autonomous we should be able to call "new Bot(this)"
   // bot.intake.run(), bot.shooter.spinUp
-  private static Bot instance;
+  public static Bot instance;
 
   public final Intake intake;
   public final Shooter shooter;

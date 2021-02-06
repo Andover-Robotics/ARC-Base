@@ -1,7 +1,8 @@
 package org.firstinspires.ftc.teamcode.drive;
 
-import androidx.annotation.NonNull;
+import static org.firstinspires.ftc.teamcode.drive.DriveConstants.*;
 
+import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
@@ -29,23 +30,19 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.teamcode.drive.localizer.RROdometryLocalizer;
 import org.firstinspires.ftc.teamcode.util.AxesSigns;
 import org.firstinspires.ftc.teamcode.util.BNO055IMUUtil;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-
-import static org.firstinspires.ftc.teamcode.drive.DriveConstants.*;
-
 @Config
 public class RRMecanumDrive extends MecanumDrive {
+  private static final boolean VIRTUAL = true;
 
   // TODO tune these
   public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(3.5, 0.2, 0);
@@ -111,7 +108,7 @@ public class RRMecanumDrive extends MecanumDrive {
 
     poseHistory = new LinkedList<>();
 
-    LynxModuleUtil.ensureMinimumFirmwareVersion(hardwareMap);
+    if (!VIRTUAL) LynxModuleUtil.ensureMinimumFirmwareVersion(hardwareMap);
 
     batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -156,7 +153,7 @@ public class RRMecanumDrive extends MecanumDrive {
 
     // TODO change localizer to fusion
 //    setLocalizer(new RROdometryLocalizer(hardwareMap));
-    setLocalizer(new MecanumLocalizer(this, true));
+    setLocalizer(new MecanumLocalizer(this, false));
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {

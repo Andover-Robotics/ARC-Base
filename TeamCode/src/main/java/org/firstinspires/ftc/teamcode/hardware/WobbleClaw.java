@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -27,8 +28,7 @@ public class WobbleClaw extends SubsystemBase {
 
   public WobbleClaw(OpMode opMode) {
     armRotator = opMode.hardwareMap.dcMotor.get("wobbleArm");
-    armRotator.setTargetPosition(0);
-    armRotator.setMode(RunMode.RUN_TO_POSITION);
+    armRotator.setMode(RunMode.RUN_USING_ENCODER);
     armRotator.setZeroPowerBehavior(ZeroPowerBehavior.BRAKE);
     armPos = armRotator.getCurrentPosition();
 
@@ -37,12 +37,13 @@ public class WobbleClaw extends SubsystemBase {
   }
 
   public void rotateArm(double velocity) {
-    armPos = armRotator.getCurrentPosition();
-//    armPos += velocity * rotationMaxTicksPerIteration;
-//    armPos = Math.min(armPos, armUpPos);
-//    armPos = Math.max(armPos, armDownPos);
-    armRotator.setTargetPosition(
-        (int)Math.round(armRotator.getCurrentPosition() + velocity * rotationMaxTicksPerIteration));
+//    armPos = armRotator.getCurrentPosition();
+////    armPos += velocity * rotationMaxTicksPerIteration;
+////    armPos = Math.min(armPos, armUpPos);
+////    armPos = Math.max(armPos, armDownPos);
+//    armRotator.setTargetPosition(
+//        (int)Math.round(armRotator.getCurrentPosition() + velocity * rotationMaxTicksPerIteration));
+    armRotator.setPower(velocity * 0.25);
   }
 
   public void stopArm() {
@@ -59,9 +60,9 @@ public class WobbleClaw extends SubsystemBase {
 
 
   private FtcDashboard dash;
-  @Override
+
   public void periodic() {
-    armRotator.setPower(armSpeed);
+//    armRotator.setPower(armSpeed);
     dash.getTelemetry().addData("arm target", armRotator.getTargetPosition());
     dash.getTelemetry().addData("arm position", armRotator.getCurrentPosition());
     dash.getTelemetry().addData("arm power", armRotator.getPower());

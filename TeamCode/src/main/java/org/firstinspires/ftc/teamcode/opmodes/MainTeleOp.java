@@ -63,10 +63,10 @@ public class MainTeleOp extends BaseOpMode {
 //    L. Trigger		Adjust Slow Mode
 //    R. Trigger		Adjust Slow Mode
     driveSpeed = (1 - 0.4 * (gamepad1.left_trigger + gamepad1.right_trigger));
-    bot.drive.driveFieldCentric(gamepad1.left_stick_x * driveSpeed,
+    bot.drive.driveRobotCentric(gamepad1.left_stick_x * driveSpeed,
         -gamepad1.left_stick_y * driveSpeed,
-        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x,
-        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle);
+        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : -gamepad1.right_stick_x * driveSpeed);
+//        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle);
 
 //    D-pad			Move (Strafing at 100%) optional
 
@@ -87,13 +87,14 @@ public class MainTeleOp extends BaseOpMode {
 //    D-pad			Up: Raise wobble arm at constant speed; Down: Lower
 //    wobble arm at constant speed;
 
-    if (gamepad2.dpad_right) {
-      bot.wobbleClaw.raiseArm();
-    } else if (gamepad2.dpad_left) {
-      bot.wobbleClaw.lowerArm();
-    } else {
-      bot.wobbleClaw.stopArm();
-    }
+//    if (gamepad2.dpad_right) {
+//      bot.wobbleClaw.raiseArm();
+//    } else if (gamepad2.dpad_left) {
+//      bot.wobbleClaw.lowerArm();
+//    } else {
+//      bot.wobbleClaw.stopArm();
+//    }
+    bot.wobbleClaw.rotateArm(-gamepad2.right_stick_y);
 
     //    A			Toggle intake; toggle shooter between idle and shooting
 //    B			Toggle Wobble Goal Claw

@@ -14,7 +14,6 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -35,6 +34,7 @@ public class RingStackDetector {
   }
 
   private final OpenCvCamera camera;
+  private final RingDetectionPipeline pipeline = new RingDetectionPipeline();
   private volatile Pair<RingStackResult, Double> result = null;
 
   public RingStackDetector(OpMode opMode) {
@@ -42,7 +42,10 @@ public class RingStackDetector {
         .getIdentifier("cameraMonitorViewId", "id", opMode.hardwareMap.appContext.getPackageName());
     camera = new OpenCvInternalCamera(OpenCvInternalCamera.CameraDirection.BACK,
         cameraMonitorViewId);
-    camera.startStreaming(320 * 3, 240 * 3, OpenCvCameraRotation.SIDEWAYS_LEFT);
+    camera.openCameraDevice();
+    camera.setPipeline(pipeline);
+    camera.startStreaming(320 * 3, 240 * 3, OpenCvCameraRotation.UPRIGHT);
+
   }
 
   public Optional<Pair<RingStackResult, Double>> currentlyDetected() {
@@ -59,7 +62,7 @@ public class RingStackDetector {
     final Scalar upperRange = new Scalar(Y_UPPER, CR_UPPER, CB_UPPER);
 
     //TODO: replace these numbers with the actual thresholds
-    static final double ONE_RING_AREA = 100, FOUR_RING_AREA = 400;
+    static final double ONE_RING_AREA = 27500, FOUR_RING_AREA = 400;
     static final double ST_DEV = 10;
     NormalDistribution one_nd = new NormalDistribution(ONE_RING_AREA, ST_DEV);
     NormalDistribution four_nd = new NormalDistribution(FOUR_RING_AREA, ST_DEV);
@@ -98,8 +101,6 @@ public class RingStackDetector {
       if (bounds.size() == 0) {
         return Optional.of(Pair.create(RingStackResult.ZERO, 0.7));
       }
-      // TODO if bounds.size() == 1, compare the rectangle's position on the camera and area to preset constants for 1 vs 4 rings
-      // TODO if bounds.size() > 1, maybe set a horizontal threshold (like orange above y=100 ignored), decide on each bound, and pick the decision with the highest confidence
       if (bounds.size() == 1) {
         Rect r = bounds.get(0);
         //the way this is right now, ONE_RING_AREA and FOUR_RING_AREA should each represent the peak of

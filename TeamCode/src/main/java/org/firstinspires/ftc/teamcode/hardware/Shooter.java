@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import java.util.concurrent.TimeUnit;
 
 public class Shooter extends SubsystemBase {
-  public static double onPower = 0.5, offPower = 0.25;
+  public static double onPower = 0.6, offPower = 0.25;//changed from 0.5 / 0.25 earlier
   public static double magazineBackward = 0.705, magazineForward = 0.88;
 
   private enum State {

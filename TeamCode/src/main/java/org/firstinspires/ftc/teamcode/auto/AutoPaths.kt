@@ -21,7 +21,7 @@ class AutoPaths(val opMode: LinearOpMode) {
     val Double.toRadians get() = (toRadians(this))
 
     // (-3.36345, -0.0756263), (72-22.75, 0)
-    private val startPose = Pose2d(-48.0 - 24 + 9, -34.0, 0.0)
+    val startPose = Pose2d(-48.0 - 24 + 9, -34.0, 0.0)
     private val ramIntoStack = Vector2d(-24.0, -24.0 - 12.0)
     private val avoidStack = Vector2d(-24.0, -17.0)
     private val dropFirstWobble = mapOf(
