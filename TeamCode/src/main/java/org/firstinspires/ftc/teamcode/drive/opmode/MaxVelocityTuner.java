@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
  * <p>
  * Further fine tuning of kF may be desired.
  */
-@Config
+//@Config
 @Autonomous(group = "drive")
 public class MaxVelocityTuner extends LinearOpMode {
 

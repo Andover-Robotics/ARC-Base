@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 /*
  * This is a simple routine to test translational drive capabilities.
  */
-@Config
+//@Config
 @Autonomous(group = "drive")
 public class StrafeTest extends LinearOpMode {
 

@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import org.firstinspires.ftc.teamcode.util.Encoder.Direction;
 
-@Config
 public class RROdometryLocalizer extends ThreeTrackingWheelLocalizer {
 
   // E8T-360-250-...

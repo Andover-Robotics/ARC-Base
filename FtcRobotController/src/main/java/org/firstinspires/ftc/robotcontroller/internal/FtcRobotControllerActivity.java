@@ -300,8 +300,8 @@ public class FtcRobotControllerActivity extends Activity
     preferencesHelper.writeBooleanPrefIfDifferent(context.getString(R.string.pref_rc_connected), true);
     preferencesHelper.getSharedPreferences().registerOnSharedPreferenceChangeListener(sharedPreferencesListener);
 
-    entireScreenLayout = (LinearLayout) findViewById(R.id.entire_screen);
-    buttonMenu = (ImageButton) findViewById(R.id.menu_buttons);
+    entireScreenLayout = findViewById(R.id.entire_screen);
+    buttonMenu = findViewById(R.id.menu_buttons);
     buttonMenu.setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -313,6 +313,7 @@ public class FtcRobotControllerActivity extends Activity
           }
         });
         popupMenu.inflate(R.menu.ftc_robot_controller);
+        FtcDashboard.populateMenu(popupMenu.getMenu());
         popupMenu.show();
       }
     });
@@ -528,6 +529,7 @@ public class FtcRobotControllerActivity extends Activity
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.ftc_robot_controller, menu);
+    FtcDashboard.populateMenu(menu);
     return true;
   }
 

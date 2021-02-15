@@ -46,7 +46,7 @@ import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
  * Pressing A (on the Xbox and Logitech F310 gamepads, X on the PS4 Dualshock gamepad) will cede
  * control back to the tuning process.
  */
-@Config
+//@Config
 @Autonomous(group = "drive")
 public class DriveVelocityPIDTuner extends LinearOpMode {
 

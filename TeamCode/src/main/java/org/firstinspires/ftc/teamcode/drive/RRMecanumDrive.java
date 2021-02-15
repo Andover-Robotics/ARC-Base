@@ -40,9 +40,8 @@ import org.firstinspires.ftc.teamcode.util.BNO055IMUUtil;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 
-@Config
 public class RRMecanumDrive extends MecanumDrive {
-  private static final boolean VIRTUAL = true;
+  public static boolean VIRTUAL = true;
 
   // TODO tune these
   public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(3.5, 0.2, 0);
@@ -148,12 +147,11 @@ public class RRMecanumDrive extends MecanumDrive {
       setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MOTOR_VELO_PID);
     }
 
-    rightFront.setDirection(Direction.REVERSE);
-    rightRear.setDirection(Direction.REVERSE);
+    leftFront.setDirection(Direction.REVERSE);
+    leftRear.setDirection(Direction.REVERSE);
 
     // TODO change localizer to fusion
 //    setLocalizer(new RROdometryLocalizer(hardwareMap));
-    setLocalizer(new MecanumLocalizer(this, false));
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {

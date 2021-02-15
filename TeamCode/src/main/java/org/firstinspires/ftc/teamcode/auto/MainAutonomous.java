@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement;
@@ -17,6 +19,8 @@ public class MainAutonomous extends LinearOpMode {
   RingStackDetector.RingStackResult rings;
   double ringConfidence;
   RingStackDetector pipeline;
+  boolean performActions = true;
+  GamepadEx gamepad;
 
 
 //  static ConditionalPoseSet[] poseSets = new ConditionalPoseSet[5];
@@ -45,6 +49,7 @@ public class MainAutonomous extends LinearOpMode {
   @Override
   public void runOpMode() throws InterruptedException {
     bot = Bot.getInstance(this);
+    gamepad = new GamepadEx(gamepad1);
 
     AutoPaths paths = new AutoPaths(this);
     pipeline = new RingStackDetector(this);
@@ -60,16 +65,23 @@ public class MainAutonomous extends LinearOpMode {
             rings = pair.first;
             ringConfidence = pair.second;
           });
+      if (gamepad1.x) {
+        performActions = false;
+      }
+      if (gamepad.wasJustPressed(Button.Y)) {
+        pipeline.saveImage();
+      }
     }
 
     if (rings == null) rings = RingStackResult.ZERO;
     List<AutoPathElement> trajectories = paths.getTrajectories(rings.ringCount);
 
-    // shoot 3 rings
-    bot.shooter.shootRings(this, 3, 0.8);
     if (isStopRequested()) return;
 
+    bot.roadRunner.turn(Math.PI);
     bot.roadRunner.setPoseEstimate(paths.getStartPose());
+    bot.shooter.shootRings(this, 3, 0.95);
+    bot.shooter.turnOff();
 
     for (AutoPathElement item: trajectories) {
 
@@ -78,7 +90,7 @@ public class MainAutonomous extends LinearOpMode {
 
       if (item instanceof AutoPathElement.Path) {
         bot.roadRunner.followTrajectory(((Path) item).getTrajectory());
-      } else if (item instanceof AutoPathElement.Action) {
+      } else if (item instanceof AutoPathElement.Action && performActions) {
         ((Action) item).getRunner().invoke();
       }
 

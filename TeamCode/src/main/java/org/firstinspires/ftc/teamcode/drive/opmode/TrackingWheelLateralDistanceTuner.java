@@ -58,7 +58,7 @@ import org.firstinspires.ftc.teamcode.drive.localizer.RROdometryLocalizer;
  * but your heading will still be fine. This does not affect your overall tracking precision. The
  * heading should still line up.
  */
-@Config
+//@Config
 @TeleOp(group = "drive")
 public class TrackingWheelLateralDistanceTuner extends LinearOpMode {
 

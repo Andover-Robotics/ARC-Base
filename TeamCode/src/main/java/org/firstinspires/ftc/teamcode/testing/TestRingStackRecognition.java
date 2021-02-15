@@ -215,9 +215,8 @@ public class TestRingStackRecognition extends LinearOpMode {
      * constantly allocating and freeing large chunks of memory.
      */
     //estimated ranges based on a diagram I found
-    final double Y_LOWER = 25, Y_UPPER = 220, CB_LOWER = 0, CB_UPPER = 130, CR_LOWER = 140, CR_UPPER = 220;
-    final Scalar lowerRange = new Scalar(Y_LOWER, CR_LOWER, CB_LOWER);
-    final Scalar upperRange = new Scalar(Y_UPPER, CR_UPPER, CB_UPPER);
+    final Scalar lowerRange = new Scalar(0, 50, 220);
+    final Scalar upperRange = new Scalar(20, 200, 255);
 
     final Mat test = new Mat(),
         edgeDetector = new Mat(),
@@ -235,7 +234,7 @@ public class TestRingStackRecognition extends LinearOpMode {
        * it to another Mat.
        */
 
-      Imgproc.cvtColor(input, test, Imgproc.COLOR_RGB2YCrCb);
+      Imgproc.cvtColor(input, test, Imgproc.COLOR_RGB2HLS);
 
       Core.inRange(test, lowerRange, upperRange, edgeDetector);
       Imgproc.GaussianBlur(edgeDetector, smoothEdges, new Size(13, 13), 0, 0);

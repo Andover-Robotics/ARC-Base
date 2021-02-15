@@ -1,9 +1,11 @@
 package org.firstinspires.ftc.teamcode.auto;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 import android.util.Pair;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.math3.distribution.NormalDistribution;
@@ -14,6 +16,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -21,6 +24,7 @@ import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 public class RingStackDetector {
+
   public enum RingStackResult {
     ZERO(0),
     ONE(1),
@@ -36,6 +40,7 @@ public class RingStackDetector {
   private final OpenCvCamera camera;
   private final RingDetectionPipeline pipeline = new RingDetectionPipeline();
   private volatile Pair<RingStackResult, Double> result = null;
+  private volatile boolean saveImageNext = true;
 
   public RingStackDetector(OpMode opMode) {
     int cameraMonitorViewId = opMode.hardwareMap.appContext.getResources()
@@ -45,7 +50,10 @@ public class RingStackDetector {
     camera.openCameraDevice();
     camera.setPipeline(pipeline);
     camera.startStreaming(320 * 3, 240 * 3, OpenCvCameraRotation.UPRIGHT);
+  }
 
+  public void saveImage() {
+    saveImageNext = true;
   }
 
   public Optional<Pair<RingStackResult, Double>> currentlyDetected() {
@@ -54,15 +62,11 @@ public class RingStackDetector {
 
   class RingDetectionPipeline extends OpenCvPipeline {
 
-    static final double
-        Y_LOWER = 25, Y_UPPER = 220,
-        CB_LOWER = 0, CB_UPPER = 130,
-        CR_LOWER = 140, CR_UPPER = 220;
-    final Scalar lowerRange = new Scalar(Y_LOWER, CR_LOWER, CB_LOWER);
-    final Scalar upperRange = new Scalar(Y_UPPER, CR_UPPER, CB_UPPER);
+    final Scalar lowerRange = new Scalar(0, 50, 220);
+    final Scalar upperRange = new Scalar(20, 200, 255);
 
     //TODO: replace these numbers with the actual thresholds
-    static final double ONE_RING_AREA = 27500, FOUR_RING_AREA = 400;
+    static final double ONE_RING_AREA = 9950, FOUR_RING_AREA = 19840;
     static final double ST_DEV = 10;
     NormalDistribution one_nd = new NormalDistribution(ONE_RING_AREA, ST_DEV);
     NormalDistribution four_nd = new NormalDistribution(FOUR_RING_AREA, ST_DEV);
@@ -73,14 +77,15 @@ public class RingStackDetector {
         contourDetector = new Mat();
     final MatOfPoint2f polyDpResult = new MatOfPoint2f();
     final List<Rect> bounds = new ArrayList<>();
+    final Size gaussianKernelSize = new Size(9, 9);
 
     @SuppressLint("SdCardPath")
     @Override
     public Mat processFrame(Mat input) {
 
-      Imgproc.cvtColor(input, test, Imgproc.COLOR_RGB2YCrCb);
+      Imgproc.cvtColor(input, test, Imgproc.COLOR_RGB2HLS);
       Core.inRange(test, lowerRange, upperRange, edgeDetector);
-      Imgproc.GaussianBlur(edgeDetector, smoothEdges, new Size(13, 13), 0, 0);
+      Imgproc.GaussianBlur(edgeDetector, smoothEdges, gaussianKernelSize, 0, 0);
 
       ArrayList<MatOfPoint> contours = new ArrayList<>();
       Imgproc.findContours(smoothEdges, contours, contourDetector,
@@ -93,6 +98,18 @@ public class RingStackDetector {
       }
 
       result = identifyStackFromBounds().orElse(null);
+      if (saveImageNext) {
+        Mat cvt = new Mat();
+        Imgproc.cvtColor(input, cvt, Imgproc.COLOR_RGB2BGR);
+        Log.i("RingStackDetector", "saving current pipeline image");
+        for (Rect r : bounds) {
+          Log.i("RingStackDetector", String.format("result x=%d y=%d width=%d height=%d area=%.2f", r.x, r.y, r.width, r.height, r.area()));
+        }
+        Imgcodecs.imwrite("/sdcard/FIRST/pipe-img.png", cvt);
+        Imgcodecs.imwrite("/sdcard/FIRST/pipe-img-smoothEdges.png", smoothEdges);
+        saveImageNext = false;
+        cvt.release();
+      }
       return input;
     }
 
@@ -101,44 +118,50 @@ public class RingStackDetector {
       if (bounds.size() == 0) {
         return Optional.of(Pair.create(RingStackResult.ZERO, 0.7));
       }
-      if (bounds.size() == 1) {
-        Rect r = bounds.get(0);
-        //the way this is right now, ONE_RING_AREA and FOUR_RING_AREA should each represent the peak of
-        //a normal confidence distribution
-        if (Math.abs(ONE_RING_AREA - r.area()) > Math.abs(FOUR_RING_AREA - r.area())) {
-          //one ring
-          double conf = one_nd.density(r.area());
-          //double conf = 1 - (Math.abs(ONE_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
-          return Optional.of(Pair.create(RingStackResult.ONE, conf));
-        }else{
-          //four rings
-          double conf = four_nd.density(r.area());
-          //double conf = 1 - (Math.abs(FOUR_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
-          return Optional.of(Pair.create(RingStackResult.FOUR, conf));
-        }
+      double maxArea = bounds.stream().map(Rect::area).max(Comparator.naturalOrder()).get();
+      if (Math.abs(maxArea - ONE_RING_AREA) < Math.abs(maxArea - FOUR_RING_AREA)) {
+        return Optional.of(Pair.create(RingStackResult.ONE, 0.8));
       } else {
-        //this just chooses the largest rectangle for now since it's probably the most likely... that's what i had in mind originally lol
-        Rect maxRect = new Rect();
-        double maxArea = 0;
-        for (Rect r : bounds) {
-          if (r.area() > maxArea) {
-            maxArea = r.area();
-            maxRect = r;
-          }
-        }
-        Rect r = maxRect;
-        if (Math.abs(ONE_RING_AREA - r.area()) > Math.abs(FOUR_RING_AREA - r.area())) {
-          //one ring
-          double conf = one_nd.density(r.area());
-          //double conf = 1 - (Math.abs(ONE_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
-          return Optional.of(Pair.create(RingStackResult.ONE, conf));
-        }else{
-          //four rings
-          double conf = four_nd.density(r.area());
-          //double conf = 1 - (Math.abs(FOUR_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
-          return Optional.of(Pair.create(RingStackResult.FOUR, conf));
-        }
+        return Optional.of(Pair.create(RingStackResult.FOUR, 0.8));
       }
+//      if (bounds.size() == 1) {
+//        Rect r = bounds.get(0);
+//        //the way this is right now, ONE_RING_AREA and FOUR_RING_AREA should each represent the peak of
+//        //a normal confidence distribution
+//        if (Math.abs(ONE_RING_AREA - r.area()) > Math.abs(FOUR_RING_AREA - r.area())) {
+//          //one ring
+//          double conf = one_nd.density(r.area());
+//          //double conf = 1 - (Math.abs(ONE_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
+//          return Optional.of(Pair.create(RingStackResult.ONE, conf));
+//        }else{
+//          //four rings
+//          double conf = four_nd.density(r.area());
+//          //double conf = 1 - (Math.abs(FOUR_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
+//          return Optional.of(Pair.create(RingStackResult.FOUR, conf));
+//        }
+//      } else {
+//        //this just chooses the largest rectangle for now since it's probably the most likely... that's what i had in mind originally lol
+//        Rect maxRect = new Rect();
+//        double maxArea = 0;
+//        for (Rect r : bounds) {
+//          if (r.area() > maxArea) {
+//            maxArea = r.area();
+//            maxRect = r;
+//          }
+//        }
+//        Rect r = maxRect;
+//        if (Math.abs(ONE_RING_AREA - r.area()) > Math.abs(FOUR_RING_AREA - r.area())) {
+//          //one ring
+//          double conf = one_nd.density(r.area());
+//          //double conf = 1 - (Math.abs(ONE_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
+//          return Optional.of(Pair.create(RingStackResult.ONE, conf));
+//        } else {
+//          //four rings
+//          double conf = four_nd.density(r.area());
+//          //double conf = 1 - (Math.abs(FOUR_RING_AREA - r.area())/Math.abs(FOUR_RING_AREA - ONE_RING_AREA));
+//          return Optional.of(Pair.create(RingStackResult.FOUR, conf));
+//        }
+//      }
     }
 
     private void extractRectBounds(ArrayList<MatOfPoint> contours) {
@@ -147,7 +170,7 @@ public class RingStackDetector {
         // if polydp fails, switch to a local new MatOfPoint2f();
         Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), polyDpResult, 3, true);
         Rect r = Imgproc.boundingRect(new MatOfPoint(polyDpResult.toArray()));
-        addCombineRectangle(bounds, r, bounds.size() - 1);
+        if (r.y > 300 && r.area() > ONE_RING_AREA / 2) addCombineRectangle(bounds, r, bounds.size() - 1);
       }
     }
 

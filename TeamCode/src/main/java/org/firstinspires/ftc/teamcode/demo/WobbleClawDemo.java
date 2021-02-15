@@ -32,10 +32,11 @@ public class WobbleClawDemo extends OpMode {
 
   @Override
   public void loop() {
-//    claw.setArmPower(
-//        Math.abs(gamepad1.right_trigger) > Math.abs(gamepad1.left_trigger) ? gamepad1.right_trigger
-//            : -gamepad1.left_trigger);
-//    claw.setArmPower(-gamepad1.right_stick_y);
+    if (gamepad1.y) {
+      claw.lowerArm();
+    } else if (gamepad1.x) {
+      claw.raiseArm();
+    }
 
     if (gamepad1.right_bumper) {
       claw.close();

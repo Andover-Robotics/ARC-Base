@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import java.util.concurrent.TimeUnit;
 
 public class Shooter extends SubsystemBase {
-  public static double onPower = 0.6, offPower = 0.25;//changed from 0.5 / 0.25 earlier
+  public static double onPower = 0.9, offPower = 0.2;//changed from 0.5 / 0.25 earlier
   public static double magazineBackward = 0.705, magazineForward = 0.88;
 
   private enum State {
@@ -80,11 +80,18 @@ public class Shooter extends SubsystemBase {
 
   public void turnOff() {
     state = State.OFF;
+    motor.motorEx.setPower(0);
   }
 
   // Autonomous functions
 
   public void shootRings(LinearOpMode opMode, int numRings, double vel) {
+    motor.motorEx.setVelocity(MAX_TICKS_PER_SECOND * vel);
+    double spinupTime = opMode.getRuntime();
+    while (!opMode.isStopRequested() &&
+        !isFlywheelAtTargetVelocity(vel) &&
+        opMode.getRuntime() - spinupTime < 2.0) {}
+
     for (int i = 0; i < numRings; i++) {
       shootOneRing(opMode, vel);
       // Wait for the next ring to fall
@@ -103,13 +110,13 @@ public class Shooter extends SubsystemBase {
     while (true) {
       if (opMode.isStopRequested()) return;
       double timePassed = opMode.getRuntime() - shootTime;
-      if (timePassed > 2) break;
+      if (timePassed > 1.2) break;
       if (isFlywheelAtTargetVelocity(vel) && timePassed > 0.5) break;
     }
   }
 
   public boolean isFlywheelAtTargetVelocity(double target) {
-    // tolerance: 5 rev/min * 1/60 min/sec * 28 ticks/rev
-    return Math.abs(MAX_TICKS_PER_SECOND * target - motor.getVelocity()) < 5.0 / 60 * 28;
+    // tolerance: 5 rev/min * 1/60 min/sec * 50 ticks/rev
+    return Math.abs(MAX_TICKS_PER_SECOND * target - motor.getVelocity()) < 5.0 / 60 * 50;
   }
 }

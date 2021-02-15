@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
 import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
@@ -65,7 +66,7 @@ public class MainTeleOp extends BaseOpMode {
     driveSpeed = (1 - 0.4 * (gamepad1.left_trigger + gamepad1.right_trigger));
     bot.drive.driveRobotCentric(gamepad1.left_stick_x * driveSpeed,
         -gamepad1.left_stick_y * driveSpeed,
-        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : -gamepad1.right_stick_x * driveSpeed);
+        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x * driveSpeed);
 //        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle);
 
 //    D-pad			Move (Strafing at 100%) optional
@@ -156,7 +157,15 @@ public class MainTeleOp extends BaseOpMode {
   }
 
   // ------------------------------
-  
+
+  private void reportLocalization() {
+    Pose2d poseEstimate = bot.roadRunner.getPoseEstimate();
+    telemetry.addData("x", poseEstimate.getX());
+    telemetry.addData("y", poseEstimate.getY());
+    telemetry.addData("heading", poseEstimate.getHeading());
+    telemetry.update();
+  }
+
   private void cycleTowerState() {
     switch (towerState) {
       case LOW:
