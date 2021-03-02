@@ -2,9 +2,13 @@ package org.firstinspires.ftc.teamcode.testing;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
 public class StreamingDataWriter {
   private final Timer timer = new Timer();
@@ -34,10 +38,13 @@ public class StreamingDataWriter {
   }
 
   void loop() {
-    for (double data : source.get()) {
-      out.print(data + ",");
-    }
-    out.println();
+    String line = DoubleStream.of(source.get())
+        .mapToObj(it -> String.format(Locale.US, "%.5f", it))
+        .collect(Collectors.joining(","));
+    out.println(line);
   }
 
+  void writeLine(String line) {
+    out.println(line);
+  }
 }

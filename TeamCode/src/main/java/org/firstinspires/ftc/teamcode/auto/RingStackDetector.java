@@ -60,6 +60,11 @@ public class RingStackDetector {
     return Optional.ofNullable(result);
   }
 
+  public void close() {
+    camera.stopStreaming();
+    camera.closeCameraDevice();
+  }
+
   class RingDetectionPipeline extends OpenCvPipeline {
 
     final Scalar lowerRange = new Scalar(0, 50, 220);

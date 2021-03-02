@@ -13,6 +13,7 @@ import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -42,6 +43,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * </ul>
  */
 @TeleOp(name = "ShooterTester", group = "Experimental")
+@Disabled
 public class ShooterTester extends OpMode {
   private MotorEx shooter;
   private MecanumDrive drive;

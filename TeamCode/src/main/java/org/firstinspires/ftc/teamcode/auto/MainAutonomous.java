@@ -54,6 +54,9 @@ public class MainAutonomous extends LinearOpMode {
     AutoPaths paths = new AutoPaths(this);
     pipeline = new RingStackDetector(this);
 
+    bot.wobbleClaw.stowArm();
+    bot.wobbleClaw.close();
+
     while (!isStarted()) {
       if (isStopRequested()) return;
       // keep getting results from the pipeline
@@ -73,15 +76,22 @@ public class MainAutonomous extends LinearOpMode {
       }
     }
 
+    bot.shooter.shootRings(this, 3, 0.67);
+    bot.shooter.turnOff();
+    bot.roadRunner.setPoseEstimate(paths.getStartPose());
+    bot.roadRunner.followTrajectory(paths.getTurnTrajectory());
+    sleep(400); // Wait for camera image to settle
+    pipeline.currentlyDetected().ifPresent(pair -> {
+      rings = pair.first;
+      ringConfidence = pair.second;
+    });
+
     if (rings == null) rings = RingStackResult.ZERO;
     List<AutoPathElement> trajectories = paths.getTrajectories(rings.ringCount);
+    pipeline.close();
 
     if (isStopRequested()) return;
 
-    bot.roadRunner.turn(Math.PI);
-    bot.roadRunner.setPoseEstimate(paths.getStartPose());
-    bot.shooter.shootRings(this, 3, 0.95);
-    bot.shooter.turnOff();
 
     for (AutoPathElement item: trajectories) {
 

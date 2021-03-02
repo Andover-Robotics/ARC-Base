@@ -44,8 +44,8 @@ public class RRMecanumDrive extends MecanumDrive {
   public static boolean VIRTUAL = true;
 
   // TODO tune these
-  public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(3.5, 0.2, 0);
-  public static PIDCoefficients HEADING_PID = new PIDCoefficients(4.5, 0.5, 0);
+  public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(3.6, 0.15, 0);
+  public static PIDCoefficients HEADING_PID = new PIDCoefficients(4, 0, 0.1);
 
   public static double LATERAL_MULTIPLIER = 1;
 

@@ -66,8 +66,8 @@ public class DriveConstants {
    * acceleration values are required, and the jerk values are optional (setting a jerk of 0.0
    * forces acceleration-limited profiling). All distance units are inches.
    */
-  public static double MAX_VEL = 35;
-  public static double MAX_ACCEL = 30;
+  public static double MAX_VEL = 45;
+  public static double MAX_ACCEL = 35;
   public static double MAX_ANG_VEL = Math.toRadians(240.0);
   public static double MAX_ANG_ACCEL = Math.toRadians(180.0);
 

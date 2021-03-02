@@ -7,8 +7,8 @@ import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 public class Intake extends SubsystemBase {
-  public static double intakeSpeed = 1;
-  public static double conveyorSpeed = 1;
+  public static double intakeSpeed = 0.7;
+  public static double conveyorSpeed = 0.85;
 
   public static class RunIntake extends CommandBase {
     private final Intake intake;
@@ -29,7 +29,7 @@ public class Intake extends SubsystemBase {
     }
   }
 
-  private final Motor convBelt;
+  public final Motor convBelt;
   private final Motor actuator;
 
   public Intake(OpMode opMode) {

@@ -14,6 +14,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 public class MainTeleOp extends BaseOpMode {
   double cycle = 0;
   double prevRead = 0;
+  double fieldCentricOffset = 0;
+
   enum ShootMode {
     POWER_SHOT,
     TOWER_GOAL
@@ -34,6 +36,7 @@ public class MainTeleOp extends BaseOpMode {
   private ShootMode shootState = ShootMode.TOWER_GOAL;
   private TowerMode towerState = TowerMode.HIGH;
   private RingMode ringMode = RingMode.OFF;
+  private boolean clawOpen = true;
 
   /*
     Guidance:
@@ -64,10 +67,13 @@ public class MainTeleOp extends BaseOpMode {
 //    L. Trigger		Adjust Slow Mode
 //    R. Trigger		Adjust Slow Mode
     driveSpeed = (1 - 0.4 * (gamepad1.left_trigger + gamepad1.right_trigger));
-    bot.drive.driveRobotCentric(gamepad1.left_stick_x * driveSpeed,
+    bot.drive.driveFieldCentric(gamepad1.left_stick_x * driveSpeed,
         -gamepad1.left_stick_y * driveSpeed,
-        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x * driveSpeed);
-//        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle);
+        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x * Math.abs(gamepad1.right_stick_x) * driveSpeed,
+        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle - fieldCentricOffset);
+    if (gamepad1.left_stick_button) {
+      fieldCentricOffset = bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle;
+    }
 
 //    D-pad			Move (Strafing at 100%) optional
 
@@ -88,14 +94,11 @@ public class MainTeleOp extends BaseOpMode {
 //    D-pad			Up: Raise wobble arm at constant speed; Down: Lower
 //    wobble arm at constant speed;
 
-//    if (gamepad2.dpad_right) {
-//      bot.wobbleClaw.raiseArm();
-//    } else if (gamepad2.dpad_left) {
-//      bot.wobbleClaw.lowerArm();
-//    } else {
-//      bot.wobbleClaw.stopArm();
-//    }
-    bot.wobbleClaw.rotateArm(-gamepad2.right_stick_y);
+    if (gamepad1.dpad_up || gamepad2.dpad_up) {
+      bot.wobbleClaw.raiseArm();
+    } else if (gamepad1.dpad_down || gamepad2.dpad_down) {
+      bot.wobbleClaw.lowerArm();
+    }
 
     //    A			Toggle intake; toggle shooter between idle and shooting
 //    B			Toggle Wobble Goal Claw
@@ -119,11 +122,20 @@ public class MainTeleOp extends BaseOpMode {
       bot.shooter.runIdleSpeed();
     } else if (ringMode == RingMode.SHOOT) {
       bot.intake.stop();
+      bot.intake.convBelt.set(0.6);
       bot.shooter.runShootingSpeed();
     }
 
-    if (toggleButtonReaders.get("g2b").wasJustReleased()) {
-      if (toggleButtonReaders.get("g2b").getState()) {
+//    if (toggleButtonReaders.get("g2b").wasJustReleased()) {
+//      if (toggleButtonReaders.get("g2b").getState()) {
+//        bot.wobbleClaw.open();
+//      } else {
+//        bot.wobbleClaw.close();
+//      }
+//    }
+    if (gamepadEx1.wasJustPressed(Button.B)) {
+      clawOpen = !clawOpen;
+      if (clawOpen) {
         bot.wobbleClaw.open();
       } else {
         bot.wobbleClaw.close();
