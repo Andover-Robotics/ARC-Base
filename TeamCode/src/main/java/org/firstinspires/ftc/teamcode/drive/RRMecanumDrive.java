@@ -41,16 +41,16 @@ import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 
 public class RRMecanumDrive extends MecanumDrive {
-  public static boolean VIRTUAL = true;
+  public static boolean VIRTUAL = false;
 
   // TODO tune these
-  public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(3.6, 0.15, 0);
+  public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(4.2, 0.5, 0);
   public static PIDCoefficients HEADING_PID = new PIDCoefficients(4, 0, 0.1);
 
   public static double LATERAL_MULTIPLIER = 1;
 
   public static double VX_WEIGHT = 1;
-  public static double VY_WEIGHT = 1;
+  public static double VY_WEIGHT = 0.95;
   public static double OMEGA_WEIGHT = 1;
 
   public static int POSE_HISTORY_LIMIT = 100;

@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import java.util.concurrent.TimeUnit;
 
 public class Shooter extends SubsystemBase {
-  public static double onPower = 0.9, offPower = 0.02;//changed from 0.5 / 0.25 earlier
+  public static double onPower = 28.0 * 3100.0 / 60.0, offPower = 28.0 * -20.0 / 60.0;//changed from 0.5 / 0.25 earlier
   public static double magazineBackward = 0.705, magazineForward = 0.92;
 
   private enum State {
@@ -29,7 +29,7 @@ public class Shooter extends SubsystemBase {
   // 5400 rev/min * 1/60 min/second * 28 ticks/rev => ticks/second
   private static int MAX_TICKS_PER_SECOND = 5400 / 60 * 28;
 
-  public static long timerLength = 500;
+  public static long timerLength = 300;
   private MotorEx motor;
   private ServoEx magazine;
   private Timer feederTimer = null;
@@ -67,11 +67,15 @@ public class Shooter extends SubsystemBase {
         feederTimer = null;
       }
     dash.getTelemetry().addData("shooter velocity", motor.getVelocity());
-    motor.motorEx.setVelocity((int) Math.round(MAX_TICKS_PER_SECOND * state.power));
+    motor.motorEx.setVelocity(state.power);
   }
 
   public void runShootingSpeed(){
     state = State.SHOOT;
+  }
+
+  public void warmUp(double target) {
+    motor.motorEx.setVelocity((int) Math.round(MAX_TICKS_PER_SECOND * target));
   }
 
   public void runIdleSpeed(){
@@ -89,7 +93,8 @@ public class Shooter extends SubsystemBase {
     motor.motorEx.setVelocity((int) Math.round(MAX_TICKS_PER_SECOND * vel));
     double spinupTime = opMode.getRuntime();
     while (!opMode.isStopRequested() &&
-        opMode.getRuntime() - spinupTime < 2.0) {}
+        Math.abs(motor.motorEx.getVelocity() - (int) Math.round(MAX_TICKS_PER_SECOND * vel)) > 400 &&
+    opMode.getRuntime() - spinupTime < 0.5) {}
 
     for (int i = 0; i < numRings; i++) {
       shootOneRing(opMode, vel);
@@ -100,7 +105,7 @@ public class Shooter extends SubsystemBase {
   public void shootOneRing(LinearOpMode opMode, double vel) {
     // intent: pivot the feeder, wait for a moment, wait for the shooter rpm to rebound, pivot the feeder back
     magazine.setPosition(magazineForward);
-    opMode.sleep(700);
+    opMode.sleep(300);
     magazine.setPosition(magazineBackward);
     double shootTime = opMode.getRuntime();
 
@@ -108,7 +113,7 @@ public class Shooter extends SubsystemBase {
       if (opMode.isStopRequested()) return;
       double timePassed = opMode.getRuntime() - shootTime;
       if (timePassed > 0.8) break;
-      if (isFlywheelAtTargetVelocity(vel) && timePassed > 0.4) break;
+      if (isFlywheelAtTargetVelocity(vel) || timePassed > 0.28) break;
     }
   }
 

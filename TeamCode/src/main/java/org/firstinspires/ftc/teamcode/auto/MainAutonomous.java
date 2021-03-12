@@ -1,9 +1,13 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import java.util.Timer;
+import java.util.TimerTask;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement.Action;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement.Path;
@@ -48,6 +52,7 @@ public class MainAutonomous extends LinearOpMode {
 
   @Override
   public void runOpMode() throws InterruptedException {
+    Bot.instance = null;
     bot = Bot.getInstance(this);
     gamepad = new GamepadEx(gamepad1);
 
@@ -76,11 +81,6 @@ public class MainAutonomous extends LinearOpMode {
       }
     }
 
-    bot.shooter.shootRings(this, 3, 0.67);
-    bot.shooter.turnOff();
-    bot.roadRunner.setPoseEstimate(paths.getStartPose());
-    bot.roadRunner.followTrajectory(paths.getTurnTrajectory());
-    sleep(400); // Wait for camera image to settle
     pipeline.currentlyDetected().ifPresent(pair -> {
       rings = pair.first;
       ringConfidence = pair.second;
@@ -89,6 +89,21 @@ public class MainAutonomous extends LinearOpMode {
     if (rings == null) rings = RingStackResult.ZERO;
     List<AutoPathElement> trajectories = paths.getTrajectories(rings.ringCount);
     pipeline.close();
+
+    bot.roadRunner.setPoseEstimate(paths.getStartPose());
+    bot.shooter.warmUp(0.55);
+
+    bot.roadRunner.followTrajectory(bot.roadRunner.trajectoryBuilder(paths.getStartPose())
+        .lineToSplineHeading(new Pose2d(-48.0, -18.0, 0.0))
+        .build());
+
+    bot.roadRunner.followTrajectory(bot.roadRunner.trajectoryBuilder(new Pose2d(-48.0, -18.0, 0.0))
+        .strafeTo(paths.getStartPowerShotPose().vec())
+        .build());
+    bot.roadRunner.setWeightedDrivePower(new Pose2d(0, -0.25, 0.0));
+    bot.shooter.shootRings(this, 3, 0.5);
+    bot.roadRunner.setWeightedDrivePower(new Pose2d());
+    bot.shooter.turnOff();
 
     if (isStopRequested()) return;
 
@@ -107,7 +122,6 @@ public class MainAutonomous extends LinearOpMode {
       if (isStopRequested()) return;
     }
   }
-
 
 
 //  private static class ConditionalPoseSet {

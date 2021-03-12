@@ -25,7 +25,7 @@ class AutoPaths(val opMode: LinearOpMode) {
     private fun Pose2d.reverse() = copy(heading = heading + PI)
 
     // (-3.36345, -0.0756263), (72-22.75, 0)
-    val startPose = Pose2d(-48.0 - 24 + 9, -34.0, 0.0)
+    val startPose = Pose2d(-48.0 - 24 + 9, -34.0, PI)
     private val turnedPose = Pose2d(-48.0 - 24 + 20, -36.0, PI)
     val turnTrajectory = drive.trajectoryBuilder(startPose)
             .splineToSplineHeading(turnedPose, PI)
@@ -39,16 +39,27 @@ class AutoPaths(val opMode: LinearOpMode) {
             4 to Pose2d(48.0 + 1.4313, -48 + 5.35248 - 9f, (-90 + 31.4772).toRadians)
     )
     private val dropSecondWobble = mapOf(
-            0 to Pose2d(-6.2, -48.0 - 3.056 + 1f, (-90.0 + 30.268).toRadians),
+            0 to Pose2d(-4.2, -48.0 - 3.056 + 1f, (-90.0 + 30.268).toRadians),
             1 to Pose2d(24.0 - 9.45428 + 3f, -24.0 - 25.16465 + 3f, (102.4 - 90.0).toRadians),
-            4 to Pose2d(48 - 7.1, -48.0 - 3.0556 - 3f, (-90.0 + 30.268).toRadians)
+            4 to Pose2d(48 - 5.1, -48.0 - 3.0556 - 3f, (-90.0 + 30.268).toRadians)
     )
+    val startPowerShotPose = Pose2d(-4.0, -16 + 6.75*3, 0.0)
+    val endPowerShotPose = startPowerShotPose + Pose2d(0.0, -6.75 * 3, 0.0)
 
     //getting second wobble goal for 1 and 4
     private val secondWobbleLocation = Vector2d(-48.0, -48 - 2.0)
     private val secondWobbleApproachAngle = 165.0.toRadians
     private val secondWobbleApproach = Pose2d(secondWobbleLocation.plus(Vector2d(18.8722, -0.622) * 0.95), secondWobbleApproachAngle)
     private val secondWobbleClawDown = Vector2d(-24.0, 24.0 * 2.0)
+
+    val initTrajectory = listOf(
+            drive.trajectoryBuilder(startPose)
+                    .strafeTo(Vector2d(-48.0, -18.0))
+                    .splineToSplineHeading(startPowerShotPose, 0.0)
+                    .build(),
+            drive.trajectoryBuilder(startPowerShotPose)
+                    .strafeRight(6.75*3.0)
+                    .build())
 
     // Kotlin 1.3 does not support inline instantiation of SAM interfaces
     class MarkerCallbackImpl(val func: () -> Unit): MarkerCallback {
@@ -60,8 +71,10 @@ class AutoPaths(val opMode: LinearOpMode) {
         bot.wobbleClaw.waitUntilTargetReached(opMode)
         bot.wobbleClaw.open()
         Thread.sleep(500)
-        bot.wobbleClaw.raiseArm()
-//        bot.wobbleClaw.waitUntilTargetReached(opMode)
+        bot.wobbleClaw.stowArm()
+        bot.wobbleClaw.waitUntilTargetReached(opMode)
+        bot.wobbleClaw.stopArm()
+        bot.wobbleClaw.periodic()
     }
 
     private val shootRings = AutoPathElement.Action("Shoot 3 rings") {
@@ -74,8 +87,8 @@ class AutoPaths(val opMode: LinearOpMode) {
         bot.wobbleClaw.lowerArm()
         bot.wobbleClaw.waitUntilTargetReached(opMode)
         bot.wobbleClaw.close()
-        Thread.sleep(650)
-        bot.wobbleClaw.raiseArm()
+        Thread.sleep(450)
+//        bot.wobbleClaw.raiseArm()
 //        bot.wobbleClaw.waitUntilTargetReached(opMode)
     }
 
@@ -101,7 +114,7 @@ class AutoPaths(val opMode: LinearOpMode) {
 //                        turn(from=shootPose.heading, to=shootPose.heading+PI),
 
                         AutoPathElement.Path("Go drop first wobble",
-                                drive.trajectoryBuilder(turnedPose, true)
+                                drive.trajectoryBuilder(endPowerShotPose, true)
                                         .splineTo(dropFirstWobble[0]!!.vec(), dropFirstWobble[0]!!.heading)
                                         //.addDisplacementMarker({ MainTeleOp.testSomething()})
                                         .build()),
@@ -134,12 +147,15 @@ class AutoPaths(val opMode: LinearOpMode) {
                         // go park
                         AutoPathElement.Path("Go park",
                                 drive.trajectoryBuilder(dropSecondWobble[0]!!.reverse(), dropSecondWobble[0]!!.heading + PI)
-                                        .splineToSplineHeading(Pose2d(11.0, -25.0, PI), 0.0)
+                                        .splineToSplineHeading(Pose2d(20.0, -25.0, PI), 0.0)
                                         .build())
                 )
             },
             1 to run {
-                val secondWobble = Pose2d(secondWobbleLocation.plus(Vector2d(14.073, 12.58958)), (294.2298 + 90.0 - 8.0).toRadians)
+                val secondWobbleApproach = 294.2298 + 90.0 - 8.0
+                val offset = 2
+                val secondWobble = Pose2d(secondWobbleLocation.plus(Vector2d(14.073 + offset * Math.cos(secondWobbleApproach.toRadians),
+                        12.58958 + offset * Math.sin(secondWobbleApproach.toRadians))), (secondWobbleApproach).toRadians)
 
 //                val pose2 = Pose2d(20.0, -35.0, toRadians(175.0))
 //                val pose3 = Pose2d(secondWobbleLocation.x, secondWobbleLocation.y, secondWobbleApproachAngle + Math.PI)
@@ -156,14 +172,13 @@ class AutoPaths(val opMode: LinearOpMode) {
 //
 //                        shootRings,
 //                        turn(from=0.0, to=PI),
-                        AutoPathElement.Action("Run intake") {
-                                                             bot.intake.run()
-                        },
+//                        AutoPathElement.Action("Run intake") {
+//                                                             bot.intake.run()
+//                        },
 
                         AutoPathElement.Path("Go drop first wobble",
-                                drive.trajectoryBuilder(turnedPose, true)
-                                        .splineTo(ramIntoStack, 0.0)
-                                        .splineTo(dropFirstWobble[1]!!.vec(), dropFirstWobble[1]!!.heading)
+                                drive.trajectoryBuilder(endPowerShotPose, true)
+                                        .lineToSplineHeading(dropFirstWobble[1]!!.reverse())
                                         .build()),
 
                         dropWobble,
@@ -173,22 +188,27 @@ class AutoPaths(val opMode: LinearOpMode) {
                         },
                         AutoPathElement.Path("Make intermediate turn",
                                 drive.trajectoryBuilder(dropFirstWobble[1]!!.copy(heading=dropFirstWobble[1]!!.heading + PI))
-                                        .splineTo(Vector2d(12.0, -12.0), 20.0.toRadians)
+                                        .splineTo(Vector2d(8.16, -52.8), -(20.0).toRadians)
                                         .build()),
-                        AutoPathElement.Action("Stop intake", bot.intake::stop),
+
+                        AutoPathElement.Action("Run intake") {
+                            bot.intake.run()
+                            bot.wobbleClaw.lowerArm()
+                        },
 
                         AutoPathElement.Path("Go pick up second wobble",
-                                drive.trajectoryBuilder(Pose2d(12.0, -12.0, 20.0.toRadians), true)
+                                drive.trajectoryBuilder(Pose2d(8.16, -52.8, -(20.0).toRadians), true)
                                         .splineTo(secondWobble.vec(), secondWobble.heading + PI)
-                                        .addSpatialMarker(secondWobbleClawDown, MarkerCallbackImpl(bot.wobbleClaw::lowerArm))
                                         .build()),
+
+                        AutoPathElement.Action("Stop intake", bot.intake::stop),
 
                         pickUpWobble,
 
                         AutoPathElement.Path("Go drop second wobble",
-                                drive.trajectoryBuilder(secondWobble.reverse(), secondWobble.heading)
-                                        .splineTo(Vector2d(-27.84, -45.6), -(15.0.toRadians))
-                                        .splineTo(dropSecondWobble[1]!!.vec(), dropSecondWobble[1]!!.heading)
+                                drive.trajectoryBuilder(secondWobble, secondWobble.heading)
+//                        .splineTo(Vector2d(-27.84, -45.6), -(15.0.toRadians))
+                                        .splineToSplineHeading(dropSecondWobble[1]!!.reverse(), dropSecondWobble[1]!!.heading)
                                         .build()),
 
                         dropWobble,
@@ -212,9 +232,8 @@ class AutoPaths(val opMode: LinearOpMode) {
 
                         // go to drop first wobble
                         AutoPathElement.Path("Go drop first wobble",
-                                drive.trajectoryBuilder(turnedPose, true)
-                                        .splineTo(avoidStack, 0.0)
-                                        .splineTo(dropFirstWobble[4]!!.vec(), dropFirstWobble[4]!!.heading)
+                                drive.trajectoryBuilder(endPowerShotPose, false)
+                                        .lineToSplineHeading(dropFirstWobble[4]!!.reverse())
                                         .build()),
 
                         dropWobble,
@@ -224,6 +243,11 @@ class AutoPaths(val opMode: LinearOpMode) {
                                 drive.trajectoryBuilder(dropFirstWobble[4]!!.reverse(), dropFirstWobble[4]!!.heading + PI)
                                         .splineTo(intermediateTurn.vec(), intermediateTurn.heading)
                                         .build()),
+
+                        AutoPathElement.Action("Lower arm") {
+                            bot.wobbleClaw.lowerArm()
+                        },
+
                         // go to get second wobble
                         AutoPathElement.Path("Go get second wobble",
                                 drive.trajectoryBuilder(intermediateTurn, intermediateTurn.heading + PI)
@@ -250,7 +274,7 @@ class AutoPaths(val opMode: LinearOpMode) {
                         // go park
                         AutoPathElement.Path("Go park",
                                 drive.trajectoryBuilder(dropSecondWobble[4]!!.reverse(), dropSecondWobble[4]!!.heading + PI)
-                                        .splineTo(Vector2d(11.5, -42.24), PI)
+                                        .splineTo(Vector2d(15.5, -42.24), PI)
                                         .build())
                 )
             }

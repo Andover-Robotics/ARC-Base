@@ -16,14 +16,14 @@ public class StreamingDataWriter {
   private final int freq;
   private final PrintWriter out;
 
-  StreamingDataWriter(int freq, Supplier<double[]> source, String filename)
+  public StreamingDataWriter(int freq, Supplier<double[]> source, String filename)
       throws FileNotFoundException {
     this.source = source;
     this.freq = freq;
     out = new PrintWriter(filename);
   }
 
-  void startStreaming() {
+  public void startStreaming() {
     timer.scheduleAtFixedRate(new TimerTask() {
       @Override
       public void run() {
@@ -32,19 +32,19 @@ public class StreamingDataWriter {
     }, 0, 1000 / freq);
   }
 
-  void stopStreaming() {
+  public void stopStreaming() {
     timer.cancel();
     out.close();
   }
 
-  void loop() {
+  public void loop() {
     String line = DoubleStream.of(source.get())
         .mapToObj(it -> String.format(Locale.US, "%.5f", it))
         .collect(Collectors.joining(","));
     out.println(line);
   }
 
-  void writeLine(String line) {
+  public void writeLine(String line) {
     out.println(line);
   }
 }
