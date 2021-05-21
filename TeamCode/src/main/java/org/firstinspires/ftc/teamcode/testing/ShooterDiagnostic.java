@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -33,9 +34,9 @@ public final class ShooterDiagnostic extends OpMode {
   private GamepadEx pad;
   private StreamingDataWriter writer;
 
-  private int shootRpm = 3000;
-  private int feedGapDuration = 500;
-  private final int feedDuration = 260;
+  private int shootRpm = 3200;
+  private int feedGapDuration = 200;
+  private int feedDuration = 130;
 
   // F - feedDuration - B - feedGapDuration - repeat
   private Double feederStartTime = null;
@@ -43,7 +44,8 @@ public final class ShooterDiagnostic extends OpMode {
   public void init() {
     this.flywheel = this.hardwareMap.get(DcMotorEx.class, "shooter");
     flywheel.setMode(RunMode.RUN_USING_ENCODER);
-    flywheel.setVelocityPIDFCoefficients(10.0, 3.0, 0.3, 0.0);
+    flywheel.setDirection(Direction.REVERSE);
+    flywheel.setVelocityPIDFCoefficients(23.0, 0, 0.05, 11.6);
     this.feeder = this.hardwareMap.servo.get("magazine");
     volts = this.hardwareMap.voltageSensor.iterator().next();
     this.dash = FtcDashboard.getInstance();
@@ -81,9 +83,13 @@ public final class ShooterDiagnostic extends OpMode {
     } else if (pad.wasJustPressed(DPAD_DOWN)) {
       shootRpm -= 100;
     } else if (pad.wasJustPressed(DPAD_LEFT)) {
-      feedGapDuration += 100;
+      feedGapDuration += 20;
     } else if (pad.wasJustPressed(DPAD_RIGHT) && feedGapDuration > 100) {
-      feedGapDuration -= 100;
+      feedGapDuration -= 20;
+    } else if (pad.wasJustPressed(X)) {
+      feedDuration += 20;
+    } else if (pad.wasJustPressed(B)) {
+      feedDuration -= 20;
     }
     applyShootRpm();
 
@@ -97,6 +103,7 @@ public final class ShooterDiagnostic extends OpMode {
     telemetry.addData("flywheel rpm", flywheel.getVelocity() * 60.0 / 28.0);
     telemetry.addData("flywheel target rpm", shootRpm);
     telemetry.addData("feeder duration", feedGapDuration);
+    telemetry.addData("feeder up duration", feedDuration);
     adjustShootPID();
 
     pad.readButtons();

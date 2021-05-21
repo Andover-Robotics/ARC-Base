@@ -70,7 +70,6 @@ public class RingStackDetector {
     final Scalar lowerRange = new Scalar(0, 50, 220);
     final Scalar upperRange = new Scalar(20, 200, 255);
 
-    //TODO: replace these numbers with the actual thresholds
     static final double ONE_RING_AREA = 9950, FOUR_RING_AREA = 19840;
     static final double ST_DEV = 10;
     NormalDistribution one_nd = new NormalDistribution(ONE_RING_AREA, ST_DEV);
@@ -175,7 +174,7 @@ public class RingStackDetector {
         // if polydp fails, switch to a local new MatOfPoint2f();
         Imgproc.approxPolyDP(new MatOfPoint2f(contour.toArray()), polyDpResult, 3, true);
         Rect r = Imgproc.boundingRect(new MatOfPoint(polyDpResult.toArray()));
-        if (r.y > 300 && r.area() > ONE_RING_AREA / 2) addCombineRectangle(bounds, r, bounds.size() - 1);
+        if (r.y > 350 && r.area() > ONE_RING_AREA / 2) addCombineRectangle(bounds, r, bounds.size() - 1);
       }
     }
 

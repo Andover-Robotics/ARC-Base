@@ -1,32 +1,101 @@
 package org.firstinspires.ftc.teamcode.drive.localizer;
 
-import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.Localizer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
+public class SensorFusionLocalizer implements Localizer {
+  public Localizer[] localizers = new Localizer[5];
+  public double[] positionMultipliers = {0.15, 0.15, 0.15, 0.15, 0.4},
+      headingMultipliers = {0.225, 0.225, 0.225, 0.225, 0.1};
+  public double positionSum, headingSum;
+  private Encoder rightEncoder, leftEncoder, centerEncoder;
+  private Pose2d rightPose, leftPose, centerPose;
+  private SensorFusionData data;
 
-/*
-Encoder counts from three perpendicular dead-wheels (odometry)
-Angular orientation, angular acceleration, and linear acceleration from two Inertial Measurement Units (IMU)
-Measurements from the Robot Controller phone's gyro sensor
- */
-public abstract class SensorFusionLocalizer implements Localizer, SensorEventListener {
-  protected Localizer deadWheelLocalizer;
-  protected BNO055IMU revGyro1, revGyro2;//getAngularOrientat
-  protected SensorManager sensorManager;
-  protected Sensor accelerometer;  //accelerometer, light, proximity, magnet, compass, -gyro-, baro
+  public SensorFusionLocalizer(HardwareMap hardwareMap, BNO055IMU imu1, BNO055IMU imu2){
+    rightPose = new Pose2d(-0.55, 7.3, 0);
+    leftPose = new Pose2d(-0.55, -7.3, 0);
+    centerPose = new Pose2d(5.6, 0.512, Math.toRadians(90));
+    
+    data = new SensorFusionData(hardwareMap, imu1, imu2);
+  //switch back if doesnt work
+    localizers[0] = new RROdometryLocalizerIMU(leftPose, centerPose, 2, 1, data);
+    localizers[1] = new RROdometryLocalizerIMU(leftPose, centerPose, 2, 2, data);
+    localizers[2] = new RROdometryLocalizerIMU(rightPose, centerPose, 0, 1, data);
+    localizers[3] = new RROdometryLocalizerIMU(rightPose, centerPose, 0, 2, data);
+    localizers[4] = new RROdometryLocalizer(hardwareMap);
 
-  public SensorFusionLocalizer(Context context, Localizer deadWheelLocalizer, BNO055IMU revGyro1, BNO055IMU revGyro2) {
-    sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);//bruh
-    this.deadWheelLocalizer = deadWheelLocalizer;
-    this.revGyro1 = revGyro1;
-    this.revGyro2 = revGyro2;
-    this.accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    positionSum = DoubleStream.of(positionMultipliers).sum();
+    headingSum = DoubleStream.of(headingMultipliers).sum();
+  }
+
+  @NotNull
+  @Override
+  public Pose2d getPoseEstimate() {
+    Pose2d sum = IntStream.range(0, localizers.length)
+        .mapToObj(index -> {
+          Pose2d pose = localizers[index].getPoseEstimate();
+          return new Pose2d(pose.vec().times(positionMultipliers[index]),
+              pose.getHeading() * headingMultipliers[index]);
+        })
+        .reduce(Pose2d::plus).orElse(localizers[4].getPoseEstimate());
+    Pose2d mean = new Pose2d(
+        sum.vec().div(positionSum),
+        sum.getHeading() / headingSum);
+//    for(Localizer l: localizers){
+//        l.setPoseEstimate(mean);
+//      }
+    return mean;
+  }
+
+  @Nullable
+  @Override
+  public Pose2d getPoseVelocity() {
+    Pose2d sum = IntStream.range(0, localizers.length)
+        .mapToObj(index -> {
+          Pose2d pose = localizers[index].getPoseVelocity();
+          if (pose == null)
+            return null;
+          return new Pose2d(pose.vec().times(positionMultipliers[index]),
+              pose.getHeading() * headingMultipliers[index]);
+        })
+        .filter(Objects::nonNull)
+        .reduce(Pose2d::plus)
+        .orElse(localizers[4].getPoseVelocity());
+    Pose2d mean = new Pose2d(
+        sum.vec().div(positionSum),
+        sum.getHeading() / headingSum);
+
+    return mean;
+  }
+
+  @Override
+  public void update() {
+    data.update();
+    for (Localizer l : localizers) {
+      l.update();
+    }
+  }
+
+  @Override
+  public void setPoseEstimate(@NotNull Pose2d pose2d) {
+    for (Localizer l : localizers) {
+      l.setPoseEstimate(pose2d);
+    }
+  }
+
+  public Pose2d[] getAllPoseEstimates(){
+    return Arrays.stream(localizers)
+        .map(Localizer::getPoseEstimate)
+        .toArray(Pose2d[]::new);
   }
 }

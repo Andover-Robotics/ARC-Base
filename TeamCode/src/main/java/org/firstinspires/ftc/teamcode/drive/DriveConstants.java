@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 /*
  * Constants shared between multiple drive types.
  *
- * TODO: Tune or adjust the following constants to fit your robot. Note that the non-final
+ * Tune or adjust the following constants to fit your robot. Note that the non-final
  * fields may also be edited through the dashboard (connect to the robot's WiFi network and
  * navigate to https://192.168.49.1:8080/dash). Make sure to save the values here after you
  * adjust them in the dashboard; **config variable changes don't persist between app restarts**.
@@ -15,6 +15,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
  * These are not the only parameters; some are located in the localizer classes, drive base classes,
  * and op modes themselves.
  */
+@Config
 public class DriveConstants {
 
   /*
@@ -31,10 +32,10 @@ public class DriveConstants {
    * If using the built-in motor velocity PID, update MOTOR_VELO_PID with the tuned coefficients
    * from DriveVelocityPIDTuner.
    */
-  public static final boolean RUN_USING_ENCODER = true;
-//  public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(0, 0, 0,
-//      getMotorVelocityF(MAX_RPM / 60 * TICKS_PER_REV));
-  public static PIDFCoefficients MOTOR_VELO_PID = null;
+  public static final boolean RUN_USING_ENCODER = false;
+  public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(0, 0, 0,
+      getMotorVelocityF(MAX_RPM / 60 * TICKS_PER_REV));
+//  public static PIDFCoefficients MOTOR_VELO_PID = null; // 10 0.3 0
 
   /*
    * These are physical constants that can be determined from your robot (including the track
@@ -54,8 +55,8 @@ public class DriveConstants {
    * motor encoders or have elected not to use them for velocity control, these values should be
    * empirically tuned.
    */
-  public static double kV = 1.0 / rpmToVelocity(MAX_RPM);
-  public static double kA = 0;
+  public static double kV = 1.05 / rpmToVelocity(MAX_RPM);
+  public static double kA = 0.0045;
   public static double kStatic = 0;
 
   /*
@@ -66,7 +67,7 @@ public class DriveConstants {
    * acceleration values are required, and the jerk values are optional (setting a jerk of 0.0
    * forces acceleration-limited profiling). All distance units are inches.
    */
-  public static double MAX_VEL = 45;
+  public static double MAX_VEL = 55;
   public static double MAX_ACCEL = 35;
   public static double MAX_ANG_VEL = Math.toRadians(240.0);
   public static double MAX_ANG_ACCEL = Math.toRadians(180.0);

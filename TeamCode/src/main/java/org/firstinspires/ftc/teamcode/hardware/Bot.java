@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
+import android.util.Pair;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -11,6 +12,7 @@ import com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
+import org.openftc.revextensions2.ExpansionHubEx;
 
 public class Bot {
   // in TeleOp and Autonomous we should be able to call "new Bot(this)"
@@ -18,11 +20,12 @@ public class Bot {
   public static Bot instance;
 
   public final Intake intake;
-  public final Shooter shooter;
+  public Shooter shooter;
   public final WobbleClaw wobbleClaw;
   public final MecanumDrive drive;
   public final RRMecanumDrive roadRunner;
   public final BNO055IMU imu;
+  public Pair<ExpansionHubEx, ExpansionHubEx> hubs = null;
   public OpMode opMode;
 
   /** Get the current Bot instance from somewhere other than an OpMode */
@@ -43,16 +46,26 @@ public static Bot getInstance() {
 
   private Bot(OpMode opMode){
     this.opMode = opMode;
+    enableAutoBulkRead();
+    try {
+      this.hubs = Pair.create(opMode.hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 1"),
+          opMode.hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2"));
+      hubs.first.setPhoneChargeEnabled(true);
+      hubs.second.setPhoneChargeEnabled(true);
+    } catch (Exception e) {
+      // Avoid catastrophic errors if RevExtensions don't behave as expected. Limited trust of stability
+      e.printStackTrace();
+    }
     this.intake = new Intake(opMode);
     this.shooter = new Shooter(opMode);
     this.wobbleClaw = new WobbleClaw(opMode);
-    this.roadRunner = new RRMecanumDrive(opMode.hardwareMap);
-    imu = roadRunner.imu;
     this.drive = new MecanumDrive(false,
         new MotorEx(opMode.hardwareMap, "motorFL"),
         new MotorEx(opMode.hardwareMap, "motorFR"),
         new MotorEx(opMode.hardwareMap, "motorBL"),
         new MotorEx(opMode.hardwareMap, "motorBR"));
+    this.roadRunner = new RRMecanumDrive(opMode.hardwareMap);
+    imu = roadRunner.imu;
   }
 
 //  private void initializeImu() {
@@ -60,4 +73,10 @@ public static Bot getInstance() {
 //    params.angleUnit = AngleUnit.RADIANS;
 //    imu.initialize(params);
 //  }
+
+  private void enableAutoBulkRead() {
+    for (LynxModule mod : opMode.hardwareMap.getAll(LynxModule.class)) {
+      mod.setBulkCachingMode(BulkCachingMode.AUTO);
+    }
+  }
 }

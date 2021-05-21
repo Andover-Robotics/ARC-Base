@@ -10,16 +10,15 @@ import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 /*
  * This is a simple routine to test translational drive capabilities.
  */
-//@Config
+@Config
 @Autonomous(group = "drive")
 public class StraightTest extends LinearOpMode {
 
-  public static double DISTANCE = 60; // in
+  public static double DISTANCE = 24; // in
 
   @Override
   public void runOpMode() throws InterruptedException {
     RRMecanumDrive drive = new RRMecanumDrive(hardwareMap);
-
     Trajectory trajectory = drive.trajectoryBuilder(new Pose2d())
         .forward(DISTANCE)
         .build();

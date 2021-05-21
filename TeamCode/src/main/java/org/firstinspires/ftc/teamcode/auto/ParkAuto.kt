@@ -10,7 +10,8 @@ class ParkAuto: LinearOpMode() {
     override fun runOpMode() {
         Bot.instance = null
         val bot = Bot.getInstance(this)
-
+        telemetry.addLine("update2")
+        telemetry.update()
         waitForStart()
 
         bot.roadRunner.followTrajectory(bot.roadRunner.trajectoryBuilder(Pose2d())

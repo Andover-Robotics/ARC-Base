@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.drive;
 
 import static org.firstinspires.ftc.teamcode.drive.DriveConstants.*;
 
+import android.view.textservice.SentenceSuggestionsInfo;
 import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -24,6 +25,7 @@ import com.acmerobotics.roadrunner.util.NanoClock;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple.Direction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -35,17 +37,21 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.teamcode.drive.localizer.RROdometryLocalizer;
+import org.firstinspires.ftc.teamcode.drive.localizer.SensorFusionLocalizer;
+import org.firstinspires.ftc.teamcode.drive.localizer.TestLocalizer;
 import org.firstinspires.ftc.teamcode.util.AxesSigns;
 import org.firstinspires.ftc.teamcode.util.BNO055IMUUtil;
 import org.firstinspires.ftc.teamcode.util.DashboardUtil;
 import org.firstinspires.ftc.teamcode.util.LynxModuleUtil;
 
+@Config
 public class RRMecanumDrive extends MecanumDrive {
-  public static boolean VIRTUAL = true;
+  public static boolean VIRTUAL = false;
 
   // TODO tune these
-  public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(3.6, 0.15, 0);
-  public static PIDCoefficients HEADING_PID = new PIDCoefficients(4, 0, 0.1);
+  public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(6, 0.15, 0.3);
+  public static PIDCoefficients HEADING_PID = new PIDCoefficients(2.8, 0, 0.6);
 
   public static double LATERAL_MULTIPLIER = 1;
 
@@ -64,11 +70,12 @@ public class RRMecanumDrive extends MecanumDrive {
   private final FtcDashboard dashboard;
   private final NanoClock clock;
 
-  private Mode mode;
+  public Mode mode;
 
   private final PIDFController turnController;
   private MotionProfile turnProfile;
   private double turnStart;
+  public SensorFusionLocalizer localizer;
 
   private final TrajectoryVelocityConstraint velConstraint;
   private final TrajectoryAccelerationConstraint accelConstraint;
@@ -79,6 +86,7 @@ public class RRMecanumDrive extends MecanumDrive {
   private final DcMotorEx leftFront, leftRear, rightRear, rightFront;
   private final List<DcMotorEx> motors;
   public final BNO055IMU imu;
+  public final BNO055IMU imu2;
 
   private final VoltageSensor batteryVoltageSensor;
 
@@ -111,14 +119,14 @@ public class RRMecanumDrive extends MecanumDrive {
 
     batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-    for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
-      module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-    }
+    final List<BNO055IMU> allIMUs = hardwareMap.getAll(BNO055IMU.class);
+    imu = allIMUs.get(0);
+    imu2 = allIMUs.size() < 2 ? imu : allIMUs.get(1);
 
-    imu = hardwareMap.get(BNO055IMU.class, "imu");
     BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
     parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
     imu.initialize(parameters);
+    if (imu2 != imu) imu2.initialize(parameters);
 
     // if your hub is mounted vertically, remap the IMU axes so that the z-axis points
     // upward (normal to the floor) using a command like the following:
@@ -139,6 +147,8 @@ public class RRMecanumDrive extends MecanumDrive {
 
     if (RUN_USING_ENCODER) {
       setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    } else {
+      setMode(RunMode.RUN_WITHOUT_ENCODER);
     }
 
     setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -150,8 +160,8 @@ public class RRMecanumDrive extends MecanumDrive {
     leftFront.setDirection(Direction.REVERSE);
     leftRear.setDirection(Direction.REVERSE);
 
-    // TODO change localizer to fusion
-//    setLocalizer(new RROdometryLocalizer(hardwareMap));
+    localizer = new SensorFusionLocalizer(hardwareMap, imu, imu2);
+    setLocalizer(localizer);
   }
 
   public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {

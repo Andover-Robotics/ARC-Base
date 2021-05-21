@@ -17,28 +17,34 @@ import org.firstinspires.ftc.teamcode.util.Encoder.Direction;
 
 public class RROdometryLocalizer extends ThreeTrackingWheelLocalizer {
 
-  // E8T-360-250-...
-  public static double TICKS_PER_REV = 360;
-  public static double WHEEL_RADIUS = 38.0 / 2 / 25.4; // in
+  // This is rev through bore encoder now
+  public static double TICKS_PER_REV = 8192;
+  public static double WHEEL_RADIUS = 38.75 / 2 / 25.4; // in
   public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
+  public static double CENTER_MULT = 24 / 23.55;
 
   private final Encoder leftEncoder, rightEncoder, centerEncoder;
 
   public RROdometryLocalizer(HardwareMap hardwareMap) {
+    this(hardwareMap, new Pose2d(-0.55, 7.3, 0), new Pose2d(5.6, 0.512, Math.toRadians(90)));
+  }
+
+  public RROdometryLocalizer(HardwareMap hardwareMap, Pose2d sidePose, Pose2d centerPose) {
     // First calculated in https://docs.google.com/document/d/1s6HzvajxItlIaULulVud0IRhnVrH16yjvsGW4jbwosQ/edit
     super(Arrays.asList(
-        new Pose2d(-0.5485, 7.7588, 0), // left (no electronics)
-        new Pose2d(-0.5485, -7.7588, 0), // right (with electronics)
+        new Pose2d(-sidePose.getX(), sidePose.getY(), 0), // left (no electronics)
+        new Pose2d(-sidePose.getX(), -sidePose.getY(), 0), // right (with electronics)
         // TODO change this if they don't correspond in position
-        new Pose2d(-4.9242, 0.5485, Math.toRadians(90)) // center
+        centerPose // center
     ));
 
-    leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "leftEncoder"));
+    leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "intake"));
     rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightEncoder"));
-    centerEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "centerEncoder"));
+    centerEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorFL"));
 
-    // TODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
-    rightEncoder.setDirection(Direction.REVERSE);
+    leftEncoder.setDirection(Direction.FORWARD);
+    rightEncoder.setDirection(Direction.FORWARD);
+    centerEncoder.setDirection(Direction.REVERSE);
   }
 
   public static double encoderTicksToInches(double ticks) {
@@ -51,21 +57,17 @@ public class RROdometryLocalizer extends ThreeTrackingWheelLocalizer {
     return Arrays.asList(
         encoderTicksToInches(leftEncoder.getCurrentPosition()),
         encoderTicksToInches(rightEncoder.getCurrentPosition()),
-        encoderTicksToInches(centerEncoder.getCurrentPosition())
+        encoderTicksToInches(CENTER_MULT * centerEncoder.getCurrentPosition())
     );
   }
 
   @NonNull
   @Override
   public List<Double> getWheelVelocities() {
-    // TODO: If your encoder velocity can exceed 32767 counts / second (such as the REV Through Bore and other
-    //  competing magnetic encoders), change Encoder.getRawVelocity() to Encoder.getCorrectedVelocity() to enable a
-    //  compensation method
-
     return Arrays.asList(
-        encoderTicksToInches(leftEncoder.getRawVelocity()),
-        encoderTicksToInches(rightEncoder.getRawVelocity()),
-        encoderTicksToInches(centerEncoder.getRawVelocity())
+        encoderTicksToInches(leftEncoder.getCorrectedVelocity()),
+        encoderTicksToInches(rightEncoder.getCorrectedVelocity()),
+        encoderTicksToInches(CENTER_MULT * centerEncoder.getCorrectedVelocity())
     );
   }
 }

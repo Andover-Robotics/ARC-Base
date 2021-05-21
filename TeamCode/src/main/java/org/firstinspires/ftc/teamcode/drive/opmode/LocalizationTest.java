@@ -2,10 +2,13 @@ package org.firstinspires.ftc.teamcode.drive.opmode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.localizer.SensorFusionLocalizer;
 
 /**
  * This is a simple teleop routine for testing localization. Drive the robot around like a normal
@@ -21,6 +24,12 @@ public class LocalizationTest extends LinearOpMode {
   @Override
   public void runOpMode() throws InterruptedException {
     RRMecanumDrive drive = new RRMecanumDrive(hardwareMap);
+    for (LynxModule mod : hardwareMap.getAll(LynxModule.class)) {
+      mod.setBulkCachingMode(BulkCachingMode.AUTO);
+    }
+
+    telemetry.addLine("updated");
+    telemetry.update();
 
     drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -41,6 +50,10 @@ public class LocalizationTest extends LinearOpMode {
       telemetry.addData("x", poseEstimate.getX());
       telemetry.addData("y", poseEstimate.getY());
       telemetry.addData("heading", poseEstimate.getHeading());
+
+      int i = 0;
+      for (Pose2d estimate : drive.localizer.getAllPoseEstimates())
+        telemetry.addData("estimate " + i++, estimate.toString());
       telemetry.update();
     }
   }

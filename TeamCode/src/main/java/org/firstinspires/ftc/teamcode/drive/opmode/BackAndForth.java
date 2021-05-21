@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 
 /*
  * Op mode for preliminary tuning of the follower PID coefficients (located in the drive base
@@ -23,11 +24,11 @@ import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
  * This opmode is designed as a convenient, coarse tuning for the follower PID coefficients. It
  * is recommended that you use the FollowerPIDTuner opmode for further fine tuning.
  */
-//@Config
+@Config
 @Autonomous(group = "drive")
 public class BackAndForth extends LinearOpMode {
 
-  public static double DISTANCE = 50;
+  public static double DISTANCE = 48;
 
   @Override
   public void runOpMode() throws InterruptedException {

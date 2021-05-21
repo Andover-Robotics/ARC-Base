@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.hardware.Bot
 import java.lang.Math.toRadians
 import kotlin.math.roundToInt
 
-class AutoPaths(val opMode: LinearOpMode) {
+class AutoPathsOld(val opMode: LinearOpMode) {
 
     sealed class AutoPathElement(open val name: String) {
         class Path(override val name: String, val trajectory: Trajectory): AutoPathElement(name)
@@ -108,6 +108,7 @@ class AutoPaths(val opMode: LinearOpMode) {
                                 drive.trajectoryBuilder(dropSecondWobble[0]!!, dropSecondWobble[0]!!.heading + Math.PI)
                                 .splineToSplineHeading(Pose2d(11.0, -25.0, 0.0), 0.0)
                                 .build())
+
 
                 )
             },

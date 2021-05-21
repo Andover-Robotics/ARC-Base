@@ -1,30 +1,41 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.util.Angle;
 import com.arcrobotics.ftclib.command.CommandScheduler;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys.Trigger;
 import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
+import com.arcrobotics.ftclib.geometry.Vector2d;
+import com.arcrobotics.ftclib.util.Direction;
+import com.arcrobotics.ftclib.util.Timing;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+import java.util.function.Function;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
+import org.firstinspires.ftc.teamcode.hardware.Shooter;
+import org.firstinspires.ftc.teamcode.util.TimingScheduler;
 
 @TeleOp(name = "Main TeleOp", group = "Competition")
 public class MainTeleOp extends BaseOpMode {
-  double cycle = 0;
-  double prevRead = 0;
-  double fieldCentricOffset = 0;
+  private double cycle = 0;
+  private double prevRead = 0;
+  private double fieldCentricOffset = -90.0;
+  private TimingScheduler timingScheduler;
+  private boolean centricity = false;
 
   enum ShootMode {
-    POWER_SHOT,
-    TOWER_GOAL
-  }
+    POWER_SHOT( 3200),
+    TOWER_GOAL( 3750);
 
-  enum TowerMode {
-    HIGH,
-    MIDDLE,
-    LOW
+    public final int rpm;
+
+    ShootMode(int rpm) {
+      this.rpm = rpm;
+    }
   }
 
   enum RingMode {
@@ -34,169 +45,192 @@ public class MainTeleOp extends BaseOpMode {
   }
 
   private ShootMode shootState = ShootMode.TOWER_GOAL;
-  private TowerMode towerState = TowerMode.HIGH;
-  private RingMode ringMode = RingMode.OFF;
+  private RingMode ringMode = RingMode.INTAKE;
+  private ShootingAlignment aligner;
   private boolean clawOpen = true;
 
-  /*
-    Guidance:
-    - Should use module classes from the module package
-    - Should make a "Bot" class
-    - Should use MecanumDrive from FTCLib; we don't implement mecanum ourselves
-   */
   void subInit() {
-
+    bot.shooter = new Shooter(this);
+    timingScheduler = new TimingScheduler(this);
+    aligner = new ShootingAlignment(bot.roadRunner);
   }
 
   void buttonsInit() {
-    toggleButtonReaders.put("g2a", new ToggleButtonReader(gamepadEx2, Button.A));
-    toggleButtonReaders.put("g2b", new ToggleButtonReader(gamepadEx2, Button.B));
+
   }
 
   @Override
   public void subLoop() {
+    //update stuff=================================================================================================
     cycle = 1.0/(time-prevRead);
     prevRead = time;
+    timingScheduler.run();
 
-//  Controller 1	(Movement)
-//
-//    Left joystick		Move (Strafing)
-//    Right joystick		Independent rotation (Locks if Strafe enabled)
-    //    L. Bumper		Rotation Lock
-//    R. Bumper		Rotation Lock
-//    L. Trigger		Adjust Slow Mode
-//    R. Trigger		Adjust Slow Mode
-    driveSpeed = (1 - 0.4 * (gamepad1.left_trigger + gamepad1.right_trigger));
-    bot.drive.driveFieldCentric(gamepad1.left_stick_x * driveSpeed,
-        -gamepad1.left_stick_y * driveSpeed,
-        gamepad1.left_bumper || gamepad1.right_bumper ? 0 : gamepad1.right_stick_x * Math.abs(gamepad1.right_stick_x) * driveSpeed,
-        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle - fieldCentricOffset);
-    if (gamepad1.left_stick_button) {
+//Driving =================================================================================================
+    driveSpeed = (ringMode == RingMode.SHOOT ? 0.5 : 1) * (1 - 0.33 * (triggerSignal(Trigger.LEFT_TRIGGER) + triggerSignal(Trigger.RIGHT_TRIGGER)));
+    final double gyroAngle =
+        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle - fieldCentricOffset;
+    Vector2d driveVector = stickSignal(Direction.LEFT),
+        turnVector = new Vector2d(
+            stickSignal(Direction.RIGHT).getX() * Math.abs(stickSignal(Direction.RIGHT).getX()), 0);
+    if(bot.roadRunner.mode == Mode.IDLE) {
+      if(centricity)//epic java syntax
+        bot.drive.driveFieldCentric(
+          driveVector.getX() * driveSpeed,
+          driveVector.getY() * driveSpeed,
+          turnVector.getX() * driveSpeed,
+          gyroAngle);
+      else
+        bot.drive.driveRobotCentric(
+            -driveVector.getX() * driveSpeed,
+            -driveVector.getY() * driveSpeed,
+            turnVector.getX() * driveSpeed
+        );
+    }
+    if (buttonSignal(Button.LEFT_STICK_BUTTON)) {
       fieldCentricOffset = bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle;
     }
 
-//    D-pad			Move (Strafing at 100%) optional
 
-//    A 			N/A
-//    B 			N/A
-//    X 			Line up with tower goal automatically
-//    Y 			Feed single ring to shooter
-//    if(gamepadEx2.wasJustPressed(Button.X)){
-    // TODO line up with tower goal
-//    }
 
-//
-//Controller 2	(Robot tools)
-//
-//    Left joystick		Rotate useless servo with decoration on it
-//    Right joystick		N/A
-//
-//    D-pad			Up: Raise wobble arm at constant speed; Down: Lower
-//    wobble arm at constant speed;
 
-    if (gamepad1.dpad_up || gamepad2.dpad_up) {
-      bot.wobbleClaw.raiseArm();
-    } else if (gamepad1.dpad_down || gamepad2.dpad_down) {
-      bot.wobbleClaw.lowerArm();
-    }
 
-    //    A			Toggle intake; toggle shooter between idle and shooting
-//    B			Toggle Wobble Goal Claw
-//    X			stop
-//    Y			Feed single ring to shooter
 
-    if ((gamepadEx1.getButton(Button.X) || gamepadEx2.getButton(Button.X)) && ringMode != RingMode.OFF) {
-      ringMode = RingMode.OFF;
-      bot.intake.stop();
-      bot.shooter.turnOff();
-      bot.wobbleClaw.stopArm();
-
-    } else if (gamepadEx2.wasJustPressed(Button.A) || gamepadEx1.wasJustPressed(Button.A)) {
+//Toggle modes====================================================================================
+    if(justPressed(Button.X)){
+      aligner.runToPositionToggle();
+    } else if (justPressed(Button.A)) {
       ringMode = ringMode == RingMode.INTAKE ? RingMode.SHOOT : RingMode.INTAKE;
+    } else if (justPressed(Button.B)){
+      shootState = shootState == ShootMode.POWER_SHOT ? ShootMode.TOWER_GOAL : ShootMode.POWER_SHOT;
     }
 
-    if (gamepad2.right_stick_button || gamepad1.right_stick_button) {
+    //Do intake/shooter====================================================================================
+    if (buttonSignal(Button.RIGHT_BUMPER)) {
       bot.intake.spit();
     } else if (ringMode == RingMode.INTAKE) {
       bot.intake.run();
       bot.shooter.runIdleSpeed();
     } else if (ringMode == RingMode.SHOOT) {
-      bot.intake.stop();
-      bot.intake.convBelt.set(0.6);
-      bot.shooter.runShootingSpeed();
+      if(buttonSignal(Button.LEFT_BUMPER)){
+        bot.intake.run(0.6);
+      }else {
+        bot.intake.stop();
+      }
+
+      bot.shooter.runShootingSpeed(shootState.rpm);
     }
 
-//    if (toggleButtonReaders.get("g2b").wasJustReleased()) {
-//      if (toggleButtonReaders.get("g2b").getState()) {
-//        bot.wobbleClaw.open();
-//      } else {
-//        bot.wobbleClaw.close();
-//      }
+
+    //Wobble claw====================================================================================
+    if (buttonSignal(Button.DPAD_UP)) {
+      bot.wobbleClaw.close();
+      timingScheduler.defer(0.5, bot.wobbleClaw::raiseArm);
+    } else if (buttonSignal(Button.DPAD_DOWN)) {
+      bot.wobbleClaw.lowerArm();
+      timingScheduler.defer(0.5, bot.wobbleClaw::open);
+    } else if (justPressed(Button.DPAD_LEFT)) {
+      bot.wobbleClaw.lowerArmToDropInEndgame();
+      timingScheduler.defer(0.5, bot.wobbleClaw::open);
+    }
+
+
+//    //Blockers====================================================================================
+//    if (buttonSignal(Button.DPAD_RIGHT)) {//TODO? bind this to ringMode?
+//      bot.intake.closeBlockers();
+//    } else {
+//      bot.intake.openBlockers();
 //    }
-    if (gamepadEx1.wasJustPressed(Button.B)) {
-      clawOpen = !clawOpen;
-      if (clawOpen) {
-        bot.wobbleClaw.open();
-      } else {
-        bot.wobbleClaw.close();
-      }
+
+    //Shoot====================================================================================
+    if (justPressed(Button.Y)) {
+      bot.shooter.startFeederLoop(getRuntime());
+    } else if (justReleased(Button.Y)) {
+      bot.shooter.bringArmBack();
+    } else if (buttonSignal(Button.Y)) {
+      bot.shooter.feederLoop(getRuntime());
     }
 
-    if (gamepadEx1.wasJustPressed(Button.Y) || gamepadEx2.wasJustPressed(Button.Y)) {
-      bot.shooter.feedRing();
-    }
-//
-//    Start			N/A
-//    Select			N/A
-//
-//    L. Bumper		Toggle Power Shot mode
-//    R. Bumper		Cycle between High, Mid, and Low Goal
-//    L. Trigger		N/A
-//    R. Trigger		N/A
-    if (gamepadEx2.wasJustPressed(Button.LEFT_BUMPER)) {
-      if (shootState == ShootMode.POWER_SHOT) {
-        shootState = ShootMode.TOWER_GOAL;
-      } else {
-        shootState = ShootMode.POWER_SHOT;
-      }
+    //Flipper==================================================================================
+    if(justPressed(Button.DPAD_RIGHT)){
+      bot.shooter.flipUp();
+    }else if(justReleased(Button.DPAD_RIGHT)){
+      bot.shooter.flipDown();
     }
 
-    if (gamepadEx2.wasJustPressed(Button.RIGHT_BUMPER)) {
-      cycleTowerState();
+
+    //robotvsfieldcentric=================================================================
+    if(justPressed(Button.RIGHT_STICK_BUTTON)){
+      centricity = !centricity;
     }
+
+    /*
+    Total control scheme(same for both)
+    A:switch shoot/intake      B:switch power/tower      X:move to shoot      Y:Shoot
+    DPAD
+    L:wc drop      D:wc down      U:wc up      R:flipper
+    Joystick
+    L:movement/reset field centric    R:movement/none
+    Trigger L/R: slow
+    Bumper
+    L:Manual Conveyor      R:Reverse conveyor
+     */
+
+
 
     CommandScheduler.getInstance().run();
+
+    // TODO organize this test code
+    updateLocalization();
+    telemetry.addData("x", bot.roadRunner.getPoseEstimate().getX());
+    telemetry.addData("y", bot.roadRunner.getPoseEstimate().getY());
+    telemetry.addData("heading", bot.roadRunner.getPoseEstimate().getHeading());
+    telemetry.addData("current raw angle", bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle);
+    telemetry.addData("shoot state", shootState);
   }
 
-  // ------------------------------
 
-  private void reportLocalization() {
-    Pose2d poseEstimate = bot.roadRunner.getPoseEstimate();
-    telemetry.addData("x", poseEstimate.getX());
-    telemetry.addData("y", poseEstimate.getY());
-    telemetry.addData("heading", poseEstimate.getHeading());
-    telemetry.update();
+  //Buttons=================================================================================================
+  private boolean buttonSignal(Button button) {
+    return gamepadEx1.isDown(button) || gamepadEx2.isDown(button);
   }
 
-  private void cycleTowerState() {
-    switch (towerState) {
-      case LOW:
-        towerState = TowerMode.HIGH;
-        break;
-      case HIGH:
-        towerState = TowerMode.MIDDLE;
-        break;
-      case MIDDLE:
-        towerState = TowerMode.LOW;
-        break;
-    }
+  private double triggerSignal(Trigger trigger) {
+    double in1 = gamepadEx1.getTrigger(trigger),
+        in2 = gamepadEx2.getTrigger(trigger);
+    return Math.max(in1, in2);
   }
 
+  private Vector2d stickSignal(Direction side) {
+    Function<GamepadEx, Vector2d> toCoords = pad ->
+        side == Direction.LEFT ? new Vector2d(pad.getLeftX(), pad.getLeftY()) :
+            new Vector2d(pad.getRightX(), pad.getRightY());
+
+    Vector2d v1 = toCoords.apply(gamepadEx1),
+        v2 = toCoords.apply(gamepadEx2);
+
+    return v1.magnitude() > 0.02 ? v1 : v2;
+  }
+
+  private boolean justPressed(Button button) {
+    return gamepadEx1.wasJustPressed(button) || gamepadEx2.wasJustPressed(button);
+  }
+
+  private boolean justReleased(Button button){
+    return !(gamepadEx1.isDown(button) || gamepadEx2.isDown(button)) && (gamepadEx1.wasJustReleased(button) || gamepadEx2.wasJustReleased(button));
+  }
+
+  //Telemetry=================================================================================================
   void updateTelemetry() {
     telemetry.addData("Left Joystick (Strafing) X-Val: ", gamepad1.left_stick_x);
     telemetry.addData("Right Joystick (Turning) X-Val: ", gamepad1.right_stick_x);
     telemetry.addData("Left Joystick (Moving) Y-Val: ", gamepad1.left_stick_y);
     telemetry.addData("Cycle rate: ", cycle);
-    FtcDashboard.getInstance().getTelemetry().update();
+    telemetry.addData("Ring mode", ringMode);
+//    FtcDashboard.getInstance().getTelemetry().update();
+  }
+
+  private void updateLocalization() {
+    bot.roadRunner.update();
   }
 }
