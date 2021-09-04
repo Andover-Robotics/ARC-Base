@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.GlobalVars
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive
 import org.firstinspires.ftc.teamcode.hardware.Bot
 import org.firstinspires.ftc.teamcode.opmodes.MainTeleOp
+import org.firstinspires.ftc.teamcode.opmodes.MainTeleOp.TemplateState.*
 import java.lang.Math.toRadians
 import kotlin.math.PI
 import kotlin.math.roundToInt
@@ -80,10 +81,10 @@ class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
     //TODO: Make Trajectories
 
     //                                                                              ====================================================
-    private val trajectorySets: Map<MainTeleOp.TemplateState, List<TeleOpPathElement>> = mapOf(//TODO: change Int to some global enum
+    private val trajectorySets: Map<MainTeleOp.TemplateState, List<TeleOpPathElement>> = mapOf(
             //use !! when accessing maps ie: dropSecondWobble[0]!!
             //example
-            MainTeleOp.TemplateState.INTAKE to run{
+            INTAKE to run{
                 val specificPose = Pose2d()
                 listOf(
                         makePath("part 1",

@@ -9,6 +9,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.GlobalVars;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 import org.firstinspires.ftc.teamcode.util.TimingScheduler;
+import java.time.temporal.TemporalAccessor;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 @TeleOp(name = "Main TeleOp", group = "Competition")
 public class MainTeleOp extends BaseOpMode {
@@ -17,16 +21,22 @@ public class MainTeleOp extends BaseOpMode {
   private TimingScheduler timingScheduler;
   private boolean centricity = false;
   private PathFollower follower;
-
-
+  private boolean isManual = true;
+  private int percent = 0, part = 0;
 
 
   private double fieldCentricOffset = -90.0;
   public enum TemplateState{
-    INTAKE,
-    TRANSPORT,
-    OUTTAKE;
+    INTAKE(0.5),
+    TRANSPORT(0.5),
+    OUTTAKE(0.5);
+
+    public final double progressRate;
+
+    TemplateState(double progressRate){this.progressRate = progressRate;}
   }
+
+  Map<TemplateState, Map<Button, TemplateState>> stateMap = new StateMap().getStateMap();
 
   public TemplateState state = TemplateState.INTAKE;
 
@@ -44,32 +54,21 @@ public class MainTeleOp extends BaseOpMode {
     prevRead = time;
     timingScheduler.run();
 
-//Driving =================================================================================================
-    driveSpeed = 1;//TODO: change depending on mode
+    //Movement =================================================================================================
+    if(justPressed(Button.START)){
+      isManual = !isManual;
+    }
+    if(justPressed(Button.RIGHT_STICK_BUTTON)){
+      centricity = !centricity;
+    }
+
+    if(isManual) {
+      drive();
+    }else{
+      followPath();
+    }
 
 
-    final double gyroAngle =
-        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle - fieldCentricOffset;
-    Vector2d driveVector = stickSignal(Direction.LEFT),
-        turnVector = new Vector2d(
-            stickSignal(Direction.RIGHT).getX() * Math.abs(stickSignal(Direction.RIGHT).getX()), 0);
-    if(bot.roadRunner.mode == Mode.IDLE) {
-      if(centricity)//epic java syntax
-        bot.drive.driveFieldCentric(
-          driveVector.getX() * driveSpeed,
-          driveVector.getY() * driveSpeed,
-          turnVector.getX() * driveSpeed,
-          gyroAngle);
-      else
-        bot.drive.driveRobotCentric(
-            -driveVector.getX() * driveSpeed,
-            -driveVector.getY() * driveSpeed,
-            turnVector.getX() * driveSpeed
-        );
-    }
-    if (buttonSignal(Button.LEFT_STICK_BUTTON)) {
-      fieldCentricOffset = bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle;
-    }
 
 
     //TODO: insert actual teleop stuff here
@@ -79,12 +78,8 @@ public class MainTeleOp extends BaseOpMode {
     }
 
 
-    //robotvsfieldcentric=================================================================
-    if(justPressed(Button.RIGHT_STICK_BUTTON)){
-      centricity = !centricity;
-    }
 
-    /*
+    /*//TODO: make control scheme
     Total control scheme(same for both)
     A:switch shoot/intake      B:switch power/tower      X:move to shoot      Y:Shoot
     DPAD
@@ -110,6 +105,66 @@ public class MainTeleOp extends BaseOpMode {
   }
 
 
+
+
+
+
+  private void drive(){//Driving ===================================================================================
+    driveSpeed = 1;//TODO: change depending on mode
+
+    final double gyroAngle =
+        bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle
+            - fieldCentricOffset;
+    Vector2d driveVector = stickSignal(Direction.LEFT),
+        turnVector = new Vector2d(
+            stickSignal(Direction.RIGHT).getX() * Math.abs(stickSignal(Direction.RIGHT).getX()),
+            0);
+    if (bot.roadRunner.mode == Mode.IDLE) {
+      if (centricity)//epic java syntax
+        bot.drive.driveFieldCentric(
+            driveVector.getX() * driveSpeed,
+            driveVector.getY() * driveSpeed,
+            turnVector.getX() * driveSpeed,
+            gyroAngle);
+      else
+        bot.drive.driveRobotCentric(
+            -driveVector.getX() * driveSpeed,
+            -driveVector.getY() * driveSpeed,
+            turnVector.getX() * driveSpeed
+        );
+    }
+    if (buttonSignal(Button.BACK)) {
+      fieldCentricOffset = bot.imu.getAngularOrientation()
+          .toAngleUnit(AngleUnit.DEGREES).firstAngle;
+    }
+  }
+
+  private void followPath(){//Path following ===================================================================================
+    percent += stickSignal(Direction.LEFT).getY() * state.progressRate;
+    percent = Math.max(0, Math.min(100, percent));
+
+    for(Entry<Button, TemplateState> pair : stateMap.get(state).entrySet()){
+      if(justPressed(pair.getKey())){
+        state = pair.getValue();
+        percent = 0;
+      }
+    }
+
+    if(justPressed(Button.LEFT_STICK_BUTTON) || percent >= 100){
+      percent = 0;
+      part += 1;
+      if(part > follower.getPathsInfo().get(state)){
+        part = 0;
+        //TODO: add automatic changer?
+      }
+    }
+
+    follower.followPath(state, percent, part);
+
+    if(!follower.isTrajectory(state, part)){
+      drive();
+    }
+  }
 
   private void updateLocalization() {
     bot.roadRunner.update();
