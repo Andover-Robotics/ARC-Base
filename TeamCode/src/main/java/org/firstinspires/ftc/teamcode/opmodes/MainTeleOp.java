@@ -1,20 +1,12 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.roadrunner.util.Angle;
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
-import com.arcrobotics.ftclib.gamepad.GamepadKeys.Trigger;
-import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
 import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.util.Direction;
-import com.arcrobotics.ftclib.util.Timing;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
-import java.util.function.Function;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.GlobalVars;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 import org.firstinspires.ftc.teamcode.util.TimingScheduler;
 
@@ -24,18 +16,25 @@ public class MainTeleOp extends BaseOpMode {
   private double prevRead = 0;
   private TimingScheduler timingScheduler;
   private boolean centricity = false;
+  private PathFollower follower;
+
 
 
 
   private double fieldCentricOffset = -90.0;
+  public enum TemplateState{
+    INTAKE,
+    TRANSPORT,
+    OUTTAKE;
+  }
 
-  private PathFollower follower;
+  public TemplateState state = TemplateState.INTAKE;
 
 
   void subInit() {
     //TODO: initialize subsystems not initialized in bot constructor
     timingScheduler = new TimingScheduler(this);
-    follower = new PathFollower(bot.roadRunner);
+    follower = new PathFollower(this);
   }
 
   @Override
@@ -74,7 +73,10 @@ public class MainTeleOp extends BaseOpMode {
 
 
     //TODO: insert actual teleop stuff here
-
+    //example
+    if(justPressed(Button.RIGHT_BUMPER)){
+      GlobalVars.slideStage = 5;
+    }
 
 
     //robotvsfieldcentric=================================================================
@@ -100,6 +102,7 @@ public class MainTeleOp extends BaseOpMode {
 
     // TODO organize this test code
     updateLocalization();
+    telemetry.addData("cycle", cycle);
     telemetry.addData("x", bot.roadRunner.getPoseEstimate().getX());
     telemetry.addData("y", bot.roadRunner.getPoseEstimate().getY());
     telemetry.addData("heading", bot.roadRunner.getPoseEstimate().getHeading());

@@ -1,23 +1,23 @@
 package org.firstinspires.ftc.teamcode.auto
 
 import com.acmerobotics.roadrunner.geometry.Pose2d
-import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.acmerobotics.roadrunner.trajectory.MarkerCallback
 import com.acmerobotics.roadrunner.trajectory.Trajectory
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
-import org.firstinspires.ftc.teamcode.auto.pipeline.TemplateDetector
+import com.qualcomm.robotcore.eventloop.opmode.OpMode
+import org.firstinspires.ftc.teamcode.GlobalVars
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive
 import org.firstinspires.ftc.teamcode.hardware.Bot
+import org.firstinspires.ftc.teamcode.opmodes.MainTeleOp
 import java.lang.Math.toRadians
 import kotlin.math.PI
 import kotlin.math.roundToInt
 
-class AutoPaths(val opMode: LinearOpMode) {
+class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
 
-    sealed class AutoPathElement(open val name: String) {
-        class Path(override val name: String, val trajectory: Trajectory): AutoPathElement(name)
+    sealed class TeleOpPathElement(open val name: String) {
+        class Path(override val name: String, val trajectory: Trajectory): TeleOpPathElement(name)
         //AutoPathElement.Path(name, trajectory)
-        class Action(override val name: String, val runner: () -> Unit): AutoPathElement(name)
+        class Action(override val name: String, val runner: () -> Unit): TeleOpPathElement(name)
         //AutoPathElement.Action(name) {actions to take(include sleeps)}
     }
 
@@ -28,15 +28,15 @@ class AutoPaths(val opMode: LinearOpMode) {
     private fun Pose2d.reverse() = copy(heading = heading + PI)
     private var lastPosition: Pose2d = Pose2d()
 
-    fun makePath(name: String, trajectory: Trajectory): AutoPathElement.Path{
+    fun makePath(name: String, trajectory: Trajectory): TeleOpPathElement.Path{
         lastPosition = trajectory.end()
-        return AutoPathElement.Path(name, trajectory)
+        return TeleOpPathElement.Path(name, trajectory)
         //Start of list of trajectories should not be lastPosition
     }
 
     //Probably won't be used, but here just in case
-    fun makeAction(name: String, action: () -> Unit): AutoPathElement.Action{
-        return AutoPathElement.Action(name, action)
+    fun makeAction(name: String, action: () -> Unit): TeleOpPathElement.Action{
+        return TeleOpPathElement.Action(name, action)
         //Redundant but conforms to naming scheme
     }
 
@@ -45,8 +45,8 @@ class AutoPaths(val opMode: LinearOpMode) {
         override fun onMarkerReached() = func()
     }
 
-    private fun turn(from: Double, to: Double): AutoPathElement.Action {
-        return AutoPathElement.Action("Turn from ${Math.toDegrees(from).roundToInt()}deg" +
+    private fun turn(from: Double, to: Double): TeleOpPathElement.Action {
+        return TeleOpPathElement.Action("Turn from ${Math.toDegrees(from).roundToInt()}deg" +
                 "to ${Math.toDegrees(to).roundToInt()}deg") {
             bot.roadRunner.turn(to - from)
         }
@@ -80,33 +80,41 @@ class AutoPaths(val opMode: LinearOpMode) {
     //TODO: Make Trajectories
 
     //                                                                              ====================================================
-    private val trajectorySets: Map<TemplateDetector.PipelineResult, List<AutoPathElement>> = mapOf(
+    private val trajectorySets: Map<MainTeleOp.TemplateState, List<TeleOpPathElement>> = mapOf(//TODO: change Int to some global enum
             //use !! when accessing maps ie: dropSecondWobble[0]!!
             //example
-            TemplateDetector.PipelineResult.LEFT to run{
+            MainTeleOp.TemplateState.INTAKE to run{
                 val specificPose = Pose2d()
                 listOf(
                         makePath("part 1",
-                            drive.trajectoryBuilder(startPose)
-                                .build()),
+                                drive.trajectoryBuilder(startPose)
+                                        .build()),
 
-                        makeAction("intake something") {
-                            Thread.sleep(1000)
+                        makeAction("do something") {
+                            Thread.sleep(GlobalVars.slideStage)
                         },
 
                         makePath("part 2",
-                            drive.trajectoryBuilder(lastPosition)
-                                    .forward(10.0)
-                                    .build())
+                                drive.trajectoryBuilder(lastPosition)
+                                        .forward(10.0)
+                                        .build())
                 )
             }
 //
     )
 
 
-    fun getTrajectories(a: TemplateDetector.PipelineResult): List<AutoPathElement>{
+    fun getTrajectories(a: MainTeleOp.TemplateState): List<TeleOpPathElement>{
         return trajectorySets[a]!!
     }
+
+    fun getTrajectory(set: MainTeleOp.TemplateState, part: Int): TeleOpPathElement{//will have to add logic for actions in teleop
+        return trajectorySets[set]!!.get(part)
+    }
+    fun getTrajectoryListInfo(): Map<MainTeleOp.TemplateState, Int>{//return number of trajectories per set
+        return trajectorySets.mapValues{it.value.size}
+    }
+
 
 
 }

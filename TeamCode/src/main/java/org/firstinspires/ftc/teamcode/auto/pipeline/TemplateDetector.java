@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.util.Log;
 import android.util.Pair;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import java.nio.channels.Pipe;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -23,26 +24,26 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-public class RingStackDetector {
+public class TemplateDetector {
 
-  public enum RingStackResult {
+  public enum PipelineResult {
     ZERO(0),
     ONE(1),
-    FOUR(4);
+    TWO(2),
+    THREE(3),
+    LEFT(69),
+    RIGHT(420);//change to game appropriate
+    public final int number;
 
-    public final int ringCount;
-
-    RingStackResult(int ringCount) {
-      this.ringCount = ringCount;
-    }
+    PipelineResult(int a){this.number = a;}
   }
 
   private final OpenCvCamera camera;
   private final RingDetectionPipeline pipeline = new RingDetectionPipeline();
-  private volatile Pair<RingStackResult, Double> result = null;
+  private volatile Pair<PipelineResult, Double> result = null;
   private volatile boolean saveImageNext = true;
 
-  public RingStackDetector(OpMode opMode) {
+  public TemplateDetector(OpMode opMode) {
     int cameraMonitorViewId = opMode.hardwareMap.appContext.getResources()
         .getIdentifier("cameraMonitorViewId", "id", opMode.hardwareMap.appContext.getPackageName());
     camera = new OpenCvInternalCamera(OpenCvInternalCamera.CameraDirection.BACK,
@@ -56,7 +57,7 @@ public class RingStackDetector {
     saveImageNext = true;
   }
 
-  public Optional<Pair<RingStackResult, Double>> currentlyDetected() {
+  public Optional<Pair<PipelineResult, Double>> currentlyDetected() {
     return Optional.ofNullable(result);
   }
 
@@ -105,9 +106,9 @@ public class RingStackDetector {
       if (saveImageNext) {
         Mat cvt = new Mat();
         Imgproc.cvtColor(input, cvt, Imgproc.COLOR_RGB2BGR);
-        Log.i("RingStackDetector", "saving current pipeline image");
+        Log.i("TemplateDetector", "saving current pipeline image");
         for (Rect r : bounds) {
-          Log.i("RingStackDetector", String.format("result x=%d y=%d width=%d height=%d area=%.2f", r.x, r.y, r.width, r.height, r.area()));
+          Log.i("TemplateDetector", String.format("result x=%d y=%d width=%d height=%d area=%.2f", r.x, r.y, r.width, r.height, r.area()));
         }
         Imgcodecs.imwrite("/sdcard/FIRST/pipe-img.png", cvt);
         Imgcodecs.imwrite("/sdcard/FIRST/pipe-img-smoothEdges.png", smoothEdges);
@@ -118,15 +119,15 @@ public class RingStackDetector {
     }
 
     // returns a pair containing verdict and confidence from 0 to 1
-    private Optional<Pair<RingStackResult, Double>> identifyStackFromBounds() {
+    private Optional<Pair<PipelineResult, Double>> identifyStackFromBounds() {
       if (bounds.size() == 0) {
-        return Optional.of(Pair.create(RingStackResult.ZERO, 0.7));
+        return Optional.of(Pair.create(PipelineResult.ZERO, 0.7));
       }
       double maxArea = bounds.stream().map(Rect::area).max(Comparator.naturalOrder()).get();
       if (Math.abs(maxArea - ONE_RING_AREA) < Math.abs(maxArea - FOUR_RING_AREA)) {
-        return Optional.of(Pair.create(RingStackResult.ONE, 0.8));
+        return Optional.of(Pair.create(PipelineResult.ONE, 0.8));
       } else {
-        return Optional.of(Pair.create(RingStackResult.FOUR, 0.8));
+        return Optional.of(Pair.create(PipelineResult.THREE, 0.8));
       }
 //      if (bounds.size() == 1) {
 //        Rect r = bounds.get(0);
@@ -167,6 +168,9 @@ public class RingStackDetector {
 //        }
 //      }
     }
+
+
+    //Image Processing stuff
 
     private void extractRectBounds(ArrayList<MatOfPoint> contours) {
       bounds.clear();

@@ -1,5 +1,4 @@
 package org.firstinspires.ftc.teamcode;
 
-public class GlobalConfig {
-  //class for variables?
+public class GlobalConfig {//make all fields final
 }

@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement.Action;
 import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement.Path;
-import org.firstinspires.ftc.teamcode.auto.pipeline.RingStackDetector;
-import org.firstinspires.ftc.teamcode.auto.pipeline.RingStackDetector.RingStackResult;
+import org.firstinspires.ftc.teamcode.auto.pipeline.TemplateDetector;
+import org.firstinspires.ftc.teamcode.auto.pipeline.TemplateDetector.PipelineResult;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
 import java.util.List;
 
@@ -17,9 +17,9 @@ public class MainAutonomous extends LinearOpMode {
 
   private Bot bot;
 
-  RingStackDetector.RingStackResult detected;
+  PipelineResult detected;
   double confidence;
-  RingStackDetector pipeline;
+  TemplateDetector pipeline;
   boolean performActions = true;
   GamepadEx gamepad;
 
@@ -31,11 +31,11 @@ public class MainAutonomous extends LinearOpMode {
     gamepad = new GamepadEx(gamepad1);
 
     AutoPaths paths = new AutoPaths(this);
-    pipeline = new RingStackDetector(this);
+    pipeline = new TemplateDetector(this);
 
     //TODO: add initialization here
 
-    //                                                      ========================================================================
+    //  ie set servo position                             ========================================================================
 
 
     //Pipeline stuff
@@ -66,8 +66,8 @@ public class MainAutonomous extends LinearOpMode {
     });
 
     if (detected == null)
-      detected = RingStackResult.ZERO;
-    List<AutoPathElement> trajectories = paths.getTrajectories(detected.ringCount);//Change this when game revealed
+      detected = PipelineResult.ZERO;
+    List<AutoPathElement> trajectories = paths.getTrajectories(detected);
     pipeline.close();
 
 
