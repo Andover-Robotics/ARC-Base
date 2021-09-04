@@ -1,12 +1,10 @@
-package org.firstinspires.ftc.teamcode.hardware;
+package org.firstinspires.ftc.teamcode.hardware.oldSystemsForReference;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.Servo.Direction;
 
 public class Intake extends SubsystemBase {
   public static double intakeSpeed = 1;
@@ -15,8 +13,7 @@ public class Intake extends SubsystemBase {
     private final Intake intake;
 
     public RunIntake(Intake intake) {
-      this.intake = intake;
-      addRequirements(intake);
+      this.intake = intake;      addRequirements(intake);
     }
 
     @Override

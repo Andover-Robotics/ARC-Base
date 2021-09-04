@@ -19,9 +19,13 @@ public class Bot {
   // bot.intake.run(), bot.shooter.spinUp
   public static Bot instance;
 
-  public final Intake intake;
-  public Shooter shooter;
-  public final WobbleClaw wobbleClaw;
+
+  //TODO: Declare subsystems here
+  //example
+  //public final Intake intake;
+
+
+  //required subsystems
   public final MecanumDrive drive;
   public final RRMecanumDrive roadRunner;
   public final BNO055IMU imu;
@@ -56,9 +60,14 @@ public static Bot getInstance() {
       // Avoid catastrophic errors if RevExtensions don't behave as expected. Limited trust of stability
       e.printStackTrace();
     }
-    this.intake = new Intake(opMode);
-    this.shooter = new Shooter(opMode);
-    this.wobbleClaw = new WobbleClaw(opMode);
+
+    //TODO: initialize subsystems
+    //example
+    //this.intake = new Intake(opMode);
+
+
+
+    //required subsystems
     this.drive = new MecanumDrive(false,
         new MotorEx(opMode.hardwareMap, "motorFL"),
         new MotorEx(opMode.hardwareMap, "motorFR"),

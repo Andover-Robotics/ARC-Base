@@ -1,11 +1,16 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys.Trigger;
 import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
+import com.arcrobotics.ftclib.geometry.Vector2d;
+import com.arcrobotics.ftclib.util.Direction;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Make a TeleOp OpMode for a robot with the following hardware devices:
@@ -17,7 +22,7 @@ import java.util.Map;
  *  operate the intake, and operate the shooter. Bonus if you can automate some of this.
  *
  *  You design the control scheme.
- */
+ */                                           //    -Michael, Fall 2020
 public abstract class BaseOpMode extends OpMode {
 
   Bot bot;
@@ -33,7 +38,6 @@ public abstract class BaseOpMode extends OpMode {
     bot = Bot.getInstance(this);
     gamepadEx2 = new GamepadEx(gamepad2);
     gamepadEx1 = new GamepadEx(gamepad1);
-    buttonsInit();
     subInit();
     telemetry.addLine("Init done");
     telemetry.update();
@@ -42,15 +46,12 @@ public abstract class BaseOpMode extends OpMode {
   @Override
   public void loop() {
     updateButtons();
-    updateTelemetry();
     subLoop();
   }
 
   abstract void subInit();
-  abstract void buttonsInit();
 
   abstract void subLoop();
-  abstract void updateTelemetry();
 
   void updateButtons(){
     for(ToggleButtonReader t : toggleButtonReaders.values()){
@@ -58,5 +59,36 @@ public abstract class BaseOpMode extends OpMode {
     }
     gamepadEx1.readButtons();
     gamepadEx2.readButtons();
+  }
+
+
+
+  boolean buttonSignal(Button button) {
+    return gamepadEx1.isDown(button) || gamepadEx2.isDown(button);
+  }
+
+  double triggerSignal(Trigger trigger) {
+    double in1 = gamepadEx1.getTrigger(trigger),
+        in2 = gamepadEx2.getTrigger(trigger);
+    return Math.max(in1, in2);
+  }
+
+  Vector2d stickSignal(Direction side) {
+    Function<GamepadEx, Vector2d> toCoords = pad ->
+        side == Direction.LEFT ? new Vector2d(pad.getLeftX(), pad.getLeftY()) :
+            new Vector2d(pad.getRightX(), pad.getRightY());
+
+    Vector2d v1 = toCoords.apply(gamepadEx1),
+        v2 = toCoords.apply(gamepadEx2);
+
+    return v1.magnitude() > 0.02 ? v1 : v2;
+  }
+
+  boolean justPressed(Button button) {
+    return gamepadEx1.wasJustPressed(button) || gamepadEx2.wasJustPressed(button);
+  }
+
+  boolean justReleased(Button button){
+    return !(gamepadEx1.isDown(button) || gamepadEx2.isDown(button)) && (gamepadEx1.wasJustReleased(button) || gamepadEx2.wasJustReleased(button));
   }
 }

@@ -1,8 +1,6 @@
-package org.firstinspires.ftc.teamcode.testing;
+package org.firstinspires.ftc.teamcode.auto.pipeline;
 
-import android.util.Pair;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import org.firstinspires.ftc.teamcode.auto.RingStackDetector.RingStackResult;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraRotation;

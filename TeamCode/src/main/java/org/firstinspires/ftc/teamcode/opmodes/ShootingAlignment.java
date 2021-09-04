@@ -9,7 +9,6 @@ import com.arcrobotics.ftclib.controller.PIDController;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
-import org.firstinspires.ftc.teamcode.opmodes.MainTeleOp.ShootMode;
 import java.util.function.DoubleSupplier;
 
 public class ShootingAlignment {
