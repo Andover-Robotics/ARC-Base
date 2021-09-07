@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.util.Log;
 import android.util.Pair;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import java.nio.channels.Pipe;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -24,7 +23,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
 
-public class TemplateDetector {
+public class TemplateDetector {//TODO: Change this to control hub
 
   public enum PipelineResult {
     ZERO(0),

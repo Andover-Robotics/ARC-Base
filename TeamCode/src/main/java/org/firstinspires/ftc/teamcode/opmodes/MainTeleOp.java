@@ -5,14 +5,12 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
 import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.util.Direction;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.GlobalVars;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 import org.firstinspires.ftc.teamcode.util.TimingScheduler;
-import java.time.temporal.TemporalAccessor;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 @TeleOp(name = "Main TeleOp", group = "Competition")
 public class MainTeleOp extends BaseOpMode {
@@ -23,6 +21,10 @@ public class MainTeleOp extends BaseOpMode {
   private PathFollower follower;
   private boolean isManual = true;
   private int percent = 0, part = 0;
+
+
+
+
 
 
   private double fieldCentricOffset = -90.0;
@@ -55,6 +57,8 @@ public class MainTeleOp extends BaseOpMode {
     timingScheduler.run();
 
     //Movement =================================================================================================
+    driveSpeed = 1;//TODO: change depending on mode
+
     if(justPressed(Button.START)){
       isManual = !isManual;
     }
@@ -110,8 +114,6 @@ public class MainTeleOp extends BaseOpMode {
 
 
   private void drive(){//Driving ===================================================================================
-    driveSpeed = 1;//TODO: change depending on mode
-
     final double gyroAngle =
         bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle
             - fieldCentricOffset;

@@ -52,18 +52,6 @@ class AutoPaths(val opMode: LinearOpMode) {
         }
     }
 
-    //TODO: Insert pose/vector vals here
-
-    //                                                                  ===================================================
-
-    //example
-    // private val dropSecondWobble = mapOf(
-    //            0 to Pose2d(-4.2 + 1.5, -48.0 - 3.056 + 1f, (-90.0 + 30.268).toRadians),
-    //            1 to Pose2d(24.0 - 9.45428 + 3f, -24.0 - 25.16465, (102.4 - 90.0).toRadians),
-    //            4 to Pose2d(48 - 5.1, -48.0 - 3.0556 - 3f, (-90.0 + 30.268).toRadians)
-    //    )
-
-    val startPose = Pose2d(-48.0 - 24 + 9, -34.0, PI)
 
     //TODO: insert action vals here
 
@@ -77,7 +65,22 @@ class AutoPaths(val opMode: LinearOpMode) {
     //    }
 
 
-    //TODO: Make Trajectories
+    //Copy from here on into AutoPathVisualizer ==============================================================================
+
+    //TODO: Insert pose/vector vals here
+
+    //                                                                  ===================================================
+
+    //example
+    // private val dropSecondWobble = mapOf(
+    //            0 to Pose2d(-4.2 + 1.5, -48.0 - 3.056 + 1f, (-90.0 + 30.268).toRadians),
+    //            1 to Pose2d(24.0 - 9.45428 + 3f, -24.0 - 25.16465, (102.4 - 90.0).toRadians),
+    //            4 to Pose2d(48 - 5.1, -48.0 - 3.0556 - 3f, (-90.0 + 30.268).toRadians)
+    //    )
+
+    val startPose = Pose2d(-48.0 - 24 + 9, -34.0, PI)
+
+    //TODO: Make Trajectories in trajectorySets
 
     //                                                                              ====================================================
     private val trajectorySets: Map<TemplateDetector.PipelineResult, List<AutoPathElement>> = mapOf(
@@ -88,7 +91,8 @@ class AutoPaths(val opMode: LinearOpMode) {
                 listOf(
                         makePath("part 1",
                             drive.trajectoryBuilder(startPose)
-                                .build()),
+                                    .back(10.0)
+                                    .build()),
 
                         makeAction("intake something") {
                             Thread.sleep(1000)
