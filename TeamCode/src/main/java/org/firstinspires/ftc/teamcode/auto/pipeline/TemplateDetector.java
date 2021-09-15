@@ -38,7 +38,7 @@ public class TemplateDetector {//TODO: Change this to control hub
   }
 
   private final OpenCvCamera camera;
-  private final RingDetectionPipeline pipeline = new RingDetectionPipeline();
+  private final TemplatePipeline pipeline = new TemplatePipeline();
   private volatile Pair<PipelineResult, Double> result = null;
   private volatile boolean saveImageNext = true;
 
@@ -65,7 +65,7 @@ public class TemplateDetector {//TODO: Change this to control hub
     camera.closeCameraDevice();
   }
 
-  class RingDetectionPipeline extends OpenCvPipeline {
+  class TemplatePipeline extends OpenCvPipeline {
 
     final Scalar lowerRange = new Scalar(0, 50, 220);
     final Scalar upperRange = new Scalar(20, 200, 255);

@@ -2,15 +2,12 @@ package org.firstinspires.ftc.teamcode.hardware;
 
 import android.util.Pair;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
-import com.arcrobotics.ftclib.hardware.motors.Motor.GoBILDA;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.BNO055IMU.AngleUnit;
-import com.qualcomm.hardware.bosch.BNO055IMU.Parameters;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.HardwareMap;
+import org.firstinspires.ftc.teamcode.GlobalConfig;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 import org.openftc.revextensions2.ExpansionHubEx;
 
@@ -22,13 +19,14 @@ public class Bot {
 
   //TODO: Declare subsystems here
   //example
-  //public final Intake intake;
+  public final TemplateSubsystem templateSubsystem;
 
 
   //required subsystems
   public final MecanumDrive drive;
   public final RRMecanumDrive roadRunner;
   public final BNO055IMU imu;
+  public final Cosmetics cosmetics;
   public Pair<ExpansionHubEx, ExpansionHubEx> hubs = null;
   public OpMode opMode;
 
@@ -63,17 +61,18 @@ public static Bot getInstance() {
 
     //TODO: initialize subsystems
     //example
-    //this.intake = new Intake(opMode);
+    this.templateSubsystem = new TemplateSubsystem(opMode);
 
 
 
     //required subsystems
     this.drive = new MecanumDrive(false,
-        new MotorEx(opMode.hardwareMap, "motorFL"),
-        new MotorEx(opMode.hardwareMap, "motorFR"),
-        new MotorEx(opMode.hardwareMap, "motorBL"),
-        new MotorEx(opMode.hardwareMap, "motorBR"));
+        new MotorEx(opMode.hardwareMap, GlobalConfig.motorFL),
+        new MotorEx(opMode.hardwareMap, GlobalConfig.motorFR),
+        new MotorEx(opMode.hardwareMap, GlobalConfig.motorBL),
+        new MotorEx(opMode.hardwareMap, GlobalConfig.motorBR));
     this.roadRunner = new RRMecanumDrive(opMode.hardwareMap);
+    this.cosmetics = new Cosmetics(opMode);
     imu = roadRunner.imu;
   }
 

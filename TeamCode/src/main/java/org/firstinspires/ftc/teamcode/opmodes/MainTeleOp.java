@@ -8,12 +8,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.GlobalVars;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 import org.firstinspires.ftc.teamcode.util.TimingScheduler;
 
 @TeleOp(name = "Main TeleOp", group = "Competition")
-public class MainTeleOp extends BaseOpMode {
+public class MainTeleOp extends BaseOpMode {//required vars here
   private double cycle = 0;
   private double prevRead = 0;
   private TimingScheduler timingScheduler;
@@ -25,7 +24,7 @@ public class MainTeleOp extends BaseOpMode {
 
 
 
-
+  //config? stuff here =========================================================================
 
   private double fieldCentricOffset = -90.0;
   public enum TemplateState{
@@ -41,6 +40,12 @@ public class MainTeleOp extends BaseOpMode {
   Map<TemplateState, Map<Button, TemplateState>> stateMap = new StateMap().getStateMap();
 
   public TemplateState state = TemplateState.INTAKE;
+
+
+  //opmode vars here ==============================================================================================
+  //If there is a module-specific var, put it in the module class ie slideStage goes in the slides module
+
+
 
 
   void subInit() {
@@ -76,11 +81,9 @@ public class MainTeleOp extends BaseOpMode {
 
 
     //TODO: insert actual teleop stuff here
-    //example
-    if(justPressed(Button.RIGHT_BUMPER)){
-      GlobalVars.slideStage = 5;
+    if(justPressed(Button.A) || gamepadEx1.wasJustReleased(Button.A)){
+      bot.templateSubsystem.operateSlides(1);
     }
-
 
 
     /*//TODO: make control scheme
@@ -109,11 +112,9 @@ public class MainTeleOp extends BaseOpMode {
   }
 
 
-
-
-
-
   private void drive(){//Driving ===================================================================================
+    updateState();
+
     final double gyroAngle =
         bot.imu.getAngularOrientation().toAngleUnit(AngleUnit.DEGREES).firstAngle
             - fieldCentricOffset;
@@ -139,18 +140,15 @@ public class MainTeleOp extends BaseOpMode {
       fieldCentricOffset = bot.imu.getAngularOrientation()
           .toAngleUnit(AngleUnit.DEGREES).firstAngle;
     }
+
+
   }
 
   private void followPath(){//Path following ===================================================================================
     percent += stickSignal(Direction.LEFT).getY() * state.progressRate;
     percent = Math.max(0, Math.min(100, percent));
 
-    for(Entry<Button, TemplateState> pair : stateMap.get(state).entrySet()){
-      if(justPressed(pair.getKey())){
-        state = pair.getValue();
-        percent = 0;
-      }
-    }
+    updateState();
 
     if(justPressed(Button.LEFT_STICK_BUTTON) || percent >= 100){
       percent = 0;
@@ -165,6 +163,15 @@ public class MainTeleOp extends BaseOpMode {
 
     if(!follower.isTrajectory(state, part)){
       drive();
+    }
+  }
+
+  private void updateState(){
+    for(Entry<Button, TemplateState> pair : stateMap.get(state).entrySet()){
+      if(justPressed(pair.getKey())){
+        state = pair.getValue();
+        percent = 0;
+      }
     }
   }
 

@@ -4,7 +4,6 @@ import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.trajectory.MarkerCallback
 import com.acmerobotics.roadrunner.trajectory.Trajectory
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
-import org.firstinspires.ftc.teamcode.GlobalVars
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive
 import org.firstinspires.ftc.teamcode.hardware.Bot
 import org.firstinspires.ftc.teamcode.opmodes.MainTeleOp
@@ -92,7 +91,7 @@ class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
                                         .build()),
 
                         makeAction("do something") {
-                            Thread.sleep(GlobalVars.slideStage)
+                            bot.templateSubsystem.operateSlides(4)
                         },
 
                         makePath("part 2",
