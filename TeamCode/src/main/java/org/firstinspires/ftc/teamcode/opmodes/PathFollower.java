@@ -3,17 +3,15 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.acmerobotics.roadrunner.drive.DriveSignal;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.teamcode.auto.AutoPaths.AutoPathElement;
+import java.util.Map;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import org.firstinspires.ftc.teamcode.auto.TeleOpPaths;
 import org.firstinspires.ftc.teamcode.auto.TeleOpPaths.TeleOpPathElement;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive;
 import org.firstinspires.ftc.teamcode.drive.RRMecanumDrive.Mode;
 import org.firstinspires.ftc.teamcode.hardware.Bot;
 import org.firstinspires.ftc.teamcode.opmodes.MainTeleOp.TemplateState;
-import java.util.Map;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 
 public class PathFollower {//May or may not be used depending on the game
   private Bot bot = Bot.getInstance();
@@ -67,6 +65,6 @@ public class PathFollower {//May or may not be used depending on the game
   public void stop(){
     drive.mode = Mode.IDLE;
     drive.setDriveSignal(new DriveSignal());
-    //TODO: stop action
+    bot.reset();
   }
 }

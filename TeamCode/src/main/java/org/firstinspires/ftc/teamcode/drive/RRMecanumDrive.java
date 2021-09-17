@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.teamcode.GlobalConfig;
 import org.firstinspires.ftc.teamcode.drive.localizer.SensorFusionLocalizer;
 import org.firstinspires.ftc.teamcode.util.AxesSigns;
 import org.firstinspires.ftc.teamcode.util.BNO055IMUUtil;
@@ -143,10 +144,10 @@ public class RRMecanumDrive extends MecanumDrive {
     // upward (normal to the floor) using a command like the following:
     BNO055IMUUtil.remapAxes(imu, AxesOrder.XYZ, AxesSigns.NPN);
 
-    leftFront = hardwareMap.get(DcMotorEx.class, "motorFL");
-    leftRear = hardwareMap.get(DcMotorEx.class, "motorBL");
-    rightRear = hardwareMap.get(DcMotorEx.class, "motorBR");
-    rightFront = hardwareMap.get(DcMotorEx.class, "motorFR");
+    leftFront = hardwareMap.get(DcMotorEx.class, GlobalConfig.motorFL);
+    leftRear = hardwareMap.get(DcMotorEx.class, GlobalConfig.motorBL);
+    rightRear = hardwareMap.get(DcMotorEx.class, GlobalConfig.motorBR);
+    rightFront = hardwareMap.get(DcMotorEx.class, GlobalConfig.motorFR);
 
     motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 

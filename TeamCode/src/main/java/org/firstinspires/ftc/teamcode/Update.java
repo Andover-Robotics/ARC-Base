@@ -8,7 +8,9 @@ public class Update extends LinearOpMode {
 
   @Override
   public void runOpMode() throws InterruptedException {
-    telemetry.addData("update",  10);//change value here and see if it changes on telemetry
+    telemetry.addData("update",
+        4321900
+    );//change value here and see if it changes on telemetry
     telemetry.update();
     waitForStart();
   }

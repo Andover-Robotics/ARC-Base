@@ -4,18 +4,19 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.Localizer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import org.firstinspires.ftc.teamcode.util.Encoder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+import org.firstinspires.ftc.teamcode.GlobalConfig.SensorFusionValues;
+import org.firstinspires.ftc.teamcode.util.Encoder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SensorFusionLocalizer implements Localizer {
   public Localizer[] localizers = new Localizer[5];
-  public double[] positionMultipliers = {0.15, 0.15, 0.15, 0.15, 0.4},
-      headingMultipliers = {0.225, 0.225, 0.225, 0.225, 0.1};
+  public double[] positionMultipliers = SensorFusionValues.sensorFusionPositionWeights,
+      headingMultipliers = SensorFusionValues.sensorFusionHeadingWeights;
   public double positionSum, headingSum;
   private Encoder rightEncoder, leftEncoder, centerEncoder;
   private Pose2d rightPose, leftPose, centerPose;
@@ -27,7 +28,7 @@ public class SensorFusionLocalizer implements Localizer {
     centerPose = new Pose2d(5.6, 0.512, Math.toRadians(90));
     
     data = new SensorFusionData(hardwareMap, imu1, imu2);
-  //switch back if doesnt work
+    //switch encoders around if this doesnt work
     localizers[0] = new RROdometryLocalizerIMU(leftPose, centerPose, 2, 1, data);
     localizers[1] = new RROdometryLocalizerIMU(leftPose, centerPose, 2, 2, data);
     localizers[2] = new RROdometryLocalizerIMU(rightPose, centerPose, 0, 1, data);
@@ -51,6 +52,7 @@ public class SensorFusionLocalizer implements Localizer {
     Pose2d mean = new Pose2d(
         sum.vec().div(positionSum),
         sum.getHeading() / headingSum);
+    //TODO find a way to get this to work
 //    for(Localizer l: localizers){
 //        l.setPoseEstimate(mean);
 //      }

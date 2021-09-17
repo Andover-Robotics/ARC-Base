@@ -31,7 +31,7 @@ public class Bot {
   public OpMode opMode;
 
   /** Get the current Bot instance from somewhere other than an OpMode */
-public static Bot getInstance() {
+  public static Bot getInstance() {
     if (instance == null) {
       throw new IllegalStateException("tried to getInstance of Bot when uninitialized");
     }
@@ -46,10 +46,14 @@ public static Bot getInstance() {
     return instance;
   }
 
+  public void reset(){
+    //TODO: add reset code here
+  }
+
   private Bot(OpMode opMode){
     this.opMode = opMode;
     enableAutoBulkRead();
-    try {
+    try {//TODO check if names work?
       this.hubs = Pair.create(opMode.hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 1"),
           opMode.hardwareMap.get(ExpansionHubEx.class, "Expansion Hub 2"));
       hubs.first.setPhoneChargeEnabled(true);

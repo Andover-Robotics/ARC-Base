@@ -7,6 +7,7 @@ import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 public class TemplateSubsystem extends SubsystemBase {
+  //Put final vars in GlobalConfig
   public static int slideStage = 0;
   public static final int upPosition = 1;
   private MotorEx motorEx;

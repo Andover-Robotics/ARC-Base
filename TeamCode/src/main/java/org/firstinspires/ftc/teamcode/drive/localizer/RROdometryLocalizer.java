@@ -1,19 +1,14 @@
 package org.firstinspires.ftc.teamcode.drive.localizer;
 
 import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
-import com.acmerobotics.roadrunner.localization.TwoTrackingWheelLocalizer;
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import org.firstinspires.ftc.teamcode.util.Encoder;
-
 import java.util.Arrays;
 import java.util.List;
-import org.firstinspires.ftc.teamcode.util.Encoder.Direction;
+import org.firstinspires.ftc.teamcode.GlobalConfig.EncoderValues;
+import org.firstinspires.ftc.teamcode.util.Encoder;
 
 public class RROdometryLocalizer extends ThreeTrackingWheelLocalizer {
 
@@ -26,25 +21,24 @@ public class RROdometryLocalizer extends ThreeTrackingWheelLocalizer {
   private final Encoder leftEncoder, rightEncoder, centerEncoder;
 
   public RROdometryLocalizer(HardwareMap hardwareMap) {
-    this(hardwareMap, new Pose2d(-0.55, 7.3, 0), new Pose2d(5.6, 0.512, Math.toRadians(90)));
+    this(hardwareMap, EncoderValues.sideEncoder, EncoderValues.centerEncoder);
   }
 
   public RROdometryLocalizer(HardwareMap hardwareMap, Pose2d sidePose, Pose2d centerPose) {
     // First calculated in https://docs.google.com/document/d/1s6HzvajxItlIaULulVud0IRhnVrH16yjvsGW4jbwosQ/edit
     super(Arrays.asList(
-        new Pose2d(-sidePose.getX(), sidePose.getY(), 0), // left (no electronics)
-        new Pose2d(-sidePose.getX(), -sidePose.getY(), 0), // right (with electronics)
-        // TODO change this if they don't correspond in position
+        new Pose2d(-sidePose.getX(), sidePose.getY(), 0), // left (relative to front)
+        new Pose2d(-sidePose.getX(), -sidePose.getY(), 0), // right (relative to front)
         centerPose // center
     ));
+    //TODO change encoder deviceNames to fit motor config
+    leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, EncoderValues.leftEncoderPort));
+    rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, EncoderValues.rightEncoderPort));
+    centerEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, EncoderValues.centerEncoderPort));
 
-    leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "intake"));
-    rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightEncoder"));
-    centerEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorFL"));
-
-    leftEncoder.setDirection(Direction.FORWARD);
-    rightEncoder.setDirection(Direction.FORWARD);
-    centerEncoder.setDirection(Direction.REVERSE);
+    leftEncoder.setDirection(EncoderValues.leftEncoderDirection);
+    rightEncoder.setDirection(EncoderValues.rightEncoderDirection);
+    centerEncoder.setDirection(EncoderValues.centerEncoderDirection);
   }
 
   public static double encoderTicksToInches(double ticks) {

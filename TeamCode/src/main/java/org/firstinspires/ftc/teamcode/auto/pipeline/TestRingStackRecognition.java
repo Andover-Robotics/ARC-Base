@@ -24,13 +24,11 @@ package org.firstinspires.ftc.teamcode.auto.pipeline;
 import android.annotation.SuppressLint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-//import com.vuforia.CameraDevice;
-
+import java.util.ArrayList;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -40,13 +38,14 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvInternalCamera;
 import org.openftc.easyopencv.OpenCvPipeline;
-import java.util.ArrayList;
+
+//import com.vuforia.CameraDevice;
 
 @TeleOp(name = "OpenCV Ring Stack Tester")
 public class TestRingStackRecognition extends LinearOpMode {
 
   private OpenCvCamera phoneCam;
-  final int ONE_RING_AREA = 100, FOUR_RING_AREA = 400;//TODO: Test ring sizes
+  final int ONE_RING_AREA = 100, FOUR_RING_AREA = 400;
   final ArrayList<Rect> finalBounds = new ArrayList<>();
 
   @Override
@@ -118,7 +117,7 @@ public class TestRingStackRecognition extends LinearOpMode {
           }
           //check size
           int area = r.height * r.width;
-          //TODO: TEST AREA
+
           telemetry.addData("Area: ", area);
           if (area > FOUR_RING_AREA) {
             telemetry.addData("# of rings in stack: ", 4);
