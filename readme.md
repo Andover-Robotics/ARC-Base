@@ -32,7 +32,7 @@ dependencies {
   implementation 'org.apache.commons:commons-math3:3.6.1'
   implementation 'org.openftc:rev-extensions-2:1.2'
   implementation 'org.openftc:easyopencv:1.1'
-  implementation 'com.arcrobotics:ftclib:1.2.0-beta'
+  implementation 'com.arcrobotics:ftclib:1.2.0-beta' // FTCLib update?
   ...
 ```
 8. add code to the end of build.common.gradle

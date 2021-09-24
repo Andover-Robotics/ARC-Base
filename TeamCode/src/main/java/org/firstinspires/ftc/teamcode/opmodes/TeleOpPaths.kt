@@ -15,10 +15,33 @@ import kotlin.math.roundToInt
 class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
 
     sealed class TeleOpPathElement(open val name: String) {
-        class Path(override val name: String, val trajectory: Trajectory): TeleOpPathElement(name)
+        class Path(override val name: String, val trajectory: Trajectory): TeleOpPathElement(name){
+            fun getTrajPose(percent: Double): Pose2d{
+                return trajectory[percent.coerceAtMost(100.0) / 100 * trajectory.duration()]
+            }
+        }
         //AutoPathElement.Path(name, trajectory)
-        class Action(override val name: String, val runner: () -> Unit): TeleOpPathElement(name)
-        //AutoPathElement.Action(name) {actions to take(include sleeps)}
+        class Action(override val name: String, val runner: (Double) -> () -> Unit): TeleOpPathElement(name){
+            fun getRunner(percent: Double): () -> Unit{
+                return runner(percent)
+            }
+        }
+        //AutoPathElement.Action(name) {percent: Double -> {actions to take(no sleeps, divide by percent)}}
+        class ActionPath(override val name: String, val trajectory: Trajectory, val runner: (Double) -> () -> Unit): TeleOpPathElement(name){
+            fun getRunnerPath(percent: Double): Pair<Trajectory, () -> Unit>{
+                return Pair(trajectory, getRunner(percent))
+            }
+            fun getRunnerPose(percent: Double): Pair<Pose2d, () -> Unit> {
+                return Pair(getTrajPose(percent), getRunner(percent))
+            }
+            fun getRunner(percent: Double): () -> Unit{
+                return runner(percent)
+            }
+            fun getTrajPose(percent: Double): Pose2d{
+                return trajectory[percent.coerceAtMost(100.0) / 100 * trajectory.duration()]
+            }
+        }
+        //AutoPathElement.ActionPath(name, trajectory) {percent: Double -> {Actions to take(no sleeps, divide by percent)}}
     }
 
     val bot: Bot = Bot.getInstance()
@@ -35,9 +58,13 @@ class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
     }
 
     //Probably won't be used, but here just in case
-    fun makeAction(name: String, action: () -> Unit): TeleOpPathElement.Action{
+    fun makeAction(name: String, action: (Double) -> () -> Unit): TeleOpPathElement.Action{
         return TeleOpPathElement.Action(name, action)
         //Redundant but conforms to naming scheme
+    }
+
+    fun makeActionPath(name: String, trajectory: Trajectory, action: (Double) -> () -> Unit): TeleOpPathElement.ActionPath{
+        return TeleOpPathElement.ActionPath(name, trajectory, action)
     }
 
     // Kotlin 1.3 does not support inline instantiation of SAM interfaces
@@ -47,9 +74,8 @@ class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
 
     private fun turn(from: Double, to: Double): TeleOpPathElement.Action {
         return TeleOpPathElement.Action("Turn from ${Math.toDegrees(from).roundToInt()}deg" +
-                "to ${Math.toDegrees(to).roundToInt()}deg") {
-            bot.roadRunner.turn(to - from)
-        }
+                "to ${Math.toDegrees(to).roundToInt()}deg"
+        ) { percent: Double -> { bot.roadRunner.turn(to - from) } }
     }
 
     //TODO: Insert pose/vector vals here
@@ -88,16 +114,19 @@ class TeleOpPaths(val opMode/*unused? keep for action cases*/: OpMode) {
                 listOf(
                         makePath("part 1",
                                 drive.trajectoryBuilder(startPose)
+                                        .forward(10.0)
                                         .build()),
 
-                        makeAction("do something") {
-                            bot.templateSubsystem.operateSlides(4)
+                        makeAction("do something") {percent: Double ->
+                            {bot.templateSubsystem.operateSlides(4 * percent)}
                         },
 
-                        makePath("part 2",
+                        makeActionPath("part 2",
                                 drive.trajectoryBuilder(lastPosition)
                                         .forward(10.0)
-                                        .build())
+                                        .build()) {percent: Double ->
+                            {bot.templateSubsystem.operateSlides(4 - 4*percent)}
+                        }
                 )
             }
 //

@@ -16,8 +16,8 @@ public class TemplateSubsystem extends SubsystemBase {
     motorEx.setRunMode(RunMode.PositionControl);
   }
 
-  public void operateSlides(int stage){
-    motorEx.setTargetPosition(stage * 4);
+  public void operateSlides(double stage){
+    motorEx.setTargetPosition((int) (stage * 4));
   }
 
 }

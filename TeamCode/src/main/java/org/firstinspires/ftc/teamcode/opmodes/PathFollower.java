@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.acmerobotics.roadrunner.drive.DriveSignal;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import java.util.Map;
 import kotlin.Unit;
@@ -18,35 +18,35 @@ public class PathFollower {//May or may not be used depending on the game
   private RRMecanumDrive drive = bot.roadRunner;
   private OpMode opmode;
   private TeleOpPaths paths;
-  public boolean doingAction = false;
 
   public PathFollower(OpMode opmode){
     this.opmode = opmode;
     this.paths = new TeleOpPaths(this.opmode);
   }
 
-  private void followTrajectory(TemplateState state, double percent, Trajectory trajectory){
-    doingAction = false;
-    drive.followTrajectoryAsync(
-        drive.trajectoryBuilder(drive.getPoseEstimate())
-            .lineToSplineHeading(trajectory.get(Math.min(percent, 100) / 100 * trajectory.duration()))
-            .build());
+  private void goToPose(Pose2d pose){
+    if(!drive.isBusy())
+      drive.followTrajectoryAsync(
+          drive.trajectoryBuilder(drive.getPoseEstimate())
+          .lineToLinearHeading(pose)
+          .build()
+      );
   }
 
   private void followAction(TemplateState state, Function0<Unit> runner){
-    if(!doingAction) {
-      doingAction = true;
-      runner.invoke();
-    }
+    runner.invoke();
   }
 
 
   public void followPath(TemplateState state, int percent, int part){
     TeleOpPathElement element = getElement(state, part);
     if(element instanceof TeleOpPathElement.Path){
-      followTrajectory(state, percent, ((TeleOpPathElement.Path)element).getTrajectory());
+      goToPose(((TeleOpPathElement.Path)element).getTrajPose(percent));
+    }else if(element instanceof TeleOpPathElement.Action){
+      followAction(state, ((TeleOpPathElement.Action)element).getRunner(percent));
     }else{
-      followAction(state, ((TeleOpPathElement.Action)element).getRunner());
+      goToPose(((TeleOpPathElement.ActionPath)element).getTrajPose(percent));
+      followAction(state, ((TeleOpPathElement.ActionPath)element).getRunner(percent));
     }
   }
 
