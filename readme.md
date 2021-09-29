@@ -1,5 +1,5 @@
 ## ARC-Base
-1. Copy [OpenRC-Turbo](https://github.com/OpenFTC/OpenRC-Turbo)
+1. Fork and clone [OpenRC-Turbo](https://github.com/OpenFTC/OpenRC-Turbo)
 2. run `git submodule add https://github.com/Andover-Robotics/ARC-Core` and Add "ARC-Core" to the Android project by adding `, ':ARC-Core'` prior to `':TeamCode'` in settings.gradle
 3. install [ftcLib](https://docs.ftclib.org/ftclib/installation)
 4. install [Roadrunner](https://acme-robotics.gitbook.io/road-runner/)
@@ -51,5 +51,7 @@ configurations.all {
 10. add `android.useAndroidX=true` to gradle.properties
 11. copy this project's TeamCode folder
 12. add the stuff to the control hubs
-    - add here
+    - Copy the files from filesForDynamicLoad into the `first/vision` folder on the control hub
+      - the filesForDynamicLoad folder can be found with the Project view instead of the Android view
+      - the `first/vision` folder can be found by the file explorer when connected to the control hub
     
