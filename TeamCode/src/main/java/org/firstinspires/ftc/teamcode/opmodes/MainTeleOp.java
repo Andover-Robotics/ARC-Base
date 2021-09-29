@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys.Trigger;
 import com.arcrobotics.ftclib.geometry.Vector2d;
 import com.arcrobotics.ftclib.util.Direction;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -62,13 +63,11 @@ public class MainTeleOp extends BaseOpMode {//required vars here
     timingScheduler.run();
 
     //Movement =================================================================================================
-    driveSpeed = 1;//TODO: change depending on mode
+    //TODO: change depending on mode
+    driveSpeed = 1 - 0.35 * (triggerSignal(Trigger.LEFT_TRIGGER) + triggerSignal(Trigger.RIGHT_TRIGGER));
 
     if(justPressed(Button.START)){
       isManual = !isManual;
-    }
-    if(justPressed(Button.RIGHT_STICK_BUTTON)){
-      centricity = !centricity;
     }
 
     if(isManual) {
@@ -87,15 +86,37 @@ public class MainTeleOp extends BaseOpMode {//required vars here
 
 
     /*//TODO: make control scheme
-    Total control scheme(same for both)
-    A:switch shoot/intake      B:switch power/tower      X:move to shoot      Y:Shoot
+    Controller 1
+    A:      B:      X:      Y:
     DPAD
-    L:wc drop      D:wc down      U:wc up      R:flipper
+    L:      D:     U:      R:
     Joystick
-    L:movement/reset field centric    R:movement/none
-    Trigger L/R: slow
+    L:movement/reset field centric or progress automation
+    R:movement/switch robotfield centric or none
+    Trigger L/R: slow driving
     Bumper
-    L:      R:
+    L:none/switch to previous path      R:none/switch to next path
+    Other
+    Start:switch between automation and driving  Back:
+
+    Controller 2
+    A:      B:      X:      Y:
+    DPAD
+    L:      D:     U:      R:
+    Joystick
+    L:movement/reset field centric or progress automation
+    R:movement/switch robotfield centric or none
+    Trigger L/R: slow driving
+    Bumper
+    L:none/switch to previous path      R:none/switch to next path
+    Other
+    Start:switch between automation and driving  Back:
+     */
+
+
+    /*
+    AUTOMATION CONTROL SCHEME
+
      */
 
 
@@ -136,34 +157,44 @@ public class MainTeleOp extends BaseOpMode {//required vars here
             turnVector.getX() * driveSpeed
         );
     }
-    if (buttonSignal(Button.BACK)) {
+    if (justPressed(Button.LEFT_STICK_BUTTON)) {
       fieldCentricOffset = bot.imu.getAngularOrientation()
           .toAngleUnit(AngleUnit.DEGREES).firstAngle;
     }
-
-
+    if(justPressed(Button.RIGHT_STICK_BUTTON)){
+      centricity = !centricity;
+    }
   }
 
   private void followPath(){//Path following ===================================================================================
-    percent += stickSignal(Direction.LEFT).getY() * state.progressRate;
-    percent = Math.max(0, Math.min(100, percent));
 
     updateState();
 
-    if(justPressed(Button.LEFT_STICK_BUTTON) || percent >= 100){
+    if(!follower.isTrajectory(state, part)){
+      drive();
+    } else {
+      percent += stickSignal(Direction.LEFT).getY() * state.progressRate;
+    }
+    percent = Math.max(0, Math.min(100, percent));
+
+
+    if(justPressed(Button.RIGHT_BUMPER) || percent >= 100){
       percent = 0;
       part += 1;
-      if(part > follower.getPathsInfo().get(state)){
+      if(part > follower.getPathsInfo().get(state) - 1){
         part = 0;
-        //TODO: add automatic changer?
+        //TODO: add automatic state changer?
+      }
+    } else if(justPressed(Button.LEFT_BUMPER) || percent <= 0){
+      percent = 100;
+      part -= 1;
+      if(part < 0){
+        part = follower.getPathsInfo().get(state) - 1;
       }
     }
 
     follower.followPath(state, percent, part);
 
-    if(!follower.isTrajectory(state, part)){
-      drive();
-    }
   }
 
   private void updateState(){

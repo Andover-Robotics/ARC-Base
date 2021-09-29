@@ -54,4 +54,5 @@ configurations.all {
     - Copy the files from filesForDynamicLoad into the `first/vision` folder on the control hub
       - the filesForDynamicLoad folder can be found with the Project view instead of the Android view
       - the `first/vision` folder can be found by the file explorer when connected to the control hub
+    - Additional files may be needed
     

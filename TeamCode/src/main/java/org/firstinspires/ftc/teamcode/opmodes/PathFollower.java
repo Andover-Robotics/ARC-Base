@@ -51,7 +51,7 @@ public class PathFollower {//May or may not be used depending on the game
   }
 
   public boolean isTrajectory(TemplateState state, int part){
-    return getElement(state, part) instanceof TeleOpPathElement.Path;
+    return getElement(state, part) instanceof TeleOpPathElement.Path || getElement(state, part) instanceof TeleOpPathElement.ActionPath;
   }
 
   private TeleOpPaths.TeleOpPathElement getElement(TemplateState state, int part){
