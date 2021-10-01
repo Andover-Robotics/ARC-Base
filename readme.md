@@ -34,7 +34,7 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
   implementation 'org.apache.commons:commons-math3:3.6.1'
   implementation 'org.openftc:rev-extensions-2:1.2'
-  implementation 'org.openftc:easyopencv:1.1'
+  implementation 'org.openftc:easyopencv:1.5.0'
   implementation 'com.arcrobotics:ftclib:1.2.0-beta' // FTCLib update?
   ...
 ```
@@ -46,13 +46,15 @@ configurations.all {
     }
 }
 ```
-9. Change gradle version to 7.0.1 in `gradle-wrapper.properties` 
-    - Also follow the android studio prompt to update gradle when it appears
+9. Change gradle version to 7.0.1 in project structure 
+    - Alternatively change it when a prompt shows up or change it in `gradle-wrapper.properties`
 10. add `android.useAndroidX=true` to gradle.properties
 11. copy this project's TeamCode folder
 12. add the stuff to the control hubs
     - Copy the files from filesForDynamicLoad into the `first/vision` folder on the control hub
       - the filesForDynamicLoad folder can be found with the Project view instead of the Android view
       - the `first/vision` folder can be found by the file explorer when connected to the control hub
+    - Add the game assets from the [OpenRC-Turbo](https://github.com/OpenFTC/OpenRC-Turbo/releases) into the `first/vision` folder
+    - Add [libOpenCvAndroid453.so](https://github.com/OpenFTC/OpenCV-Repackaged/tree/master/doc/native_libs/armeabi-v7a) into the `first` folder
+      - may or may not work i guess
     - Additional files may be needed
-    
